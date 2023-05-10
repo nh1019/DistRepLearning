@@ -1,8 +1,10 @@
+import os
 import torch
 import torch.nn as nn
 from torchvision import datasets, transforms
 from torch.utils.data import DataLoader, Subset
 from utils.aggregate import aggregate, generate_graph
+from utils.plotting import plot_losses, plot_accuracies
 from models.autoencoder import Encoder, Decoder
 from models.linear_classifier import LinearClassifier
 from tqdm import tqdm
@@ -12,11 +14,29 @@ DEVICE = 'cuda:0'
 N_WORKERS = 5
 
 def MNIST_main(args):
+    adj_matrix = generate_graph(N_WORKERS)
+    if args.model=='autoencoder':
+        train_transform = transforms.Compose([
+            transforms.RandomHorizontalFlip(p=0.3),
+            transforms.ToTensor()
+        ])
 
-    train_transform = {}
-
-    if args.model=='autoencoder' and args.model_training=='collaborative':
-        return 1
+        if args.model_training=='collaborative':
+            encoders, _, losses, encoded_dim = train_loop(args.model, args.model_training, args.model_epochs, 16, train_transform, adj_matrix)
+            plot_losses(args.model_epochs, losses, 'Collaborative_Autoencoder_MSE_Losses', args.output)
+        
+    if args.classifier=='linear':
+        if args.classifier_training=='collaborative':
+            classifiers, classifier_losses, classifier_accuracies = classifier_training(encoders, args.classifier_training, args.classifier_epochs, 16, encoded_dim, train_transform, adj_matrix)
+            plot_losses(args.classifier_epochs, classifier_losses, 'Collaborative_Autoencoder_Classifier_Losses', args.output)
+            plot_accuracies(args.classifier_epochs, classifier_accuracies, 'Collaborative_Autoencoder_Classifier_Accuracies', args.output)
+    
+    if args.testing=='local':
+        test_accuracies = test_classifier(encoders, classifiers, args.testing)
+    
+    with open(os.path.join(args.output, 'test_accuracies'), 'w') as f:
+        for key in test_accuracies.keys():
+            f.write('{},{:.2f}\n'.format(key, test_accuracies[key]))
 
 
 def test_classifier(model, classifier, mode: str):
@@ -99,7 +119,7 @@ def train_loop(model: str, mode: str, epochs: int, batch_size: int, train_transf
             encoders = aggregate(N_WORKERS, encoders, adj_matrix)
             decoders = aggregate(N_WORKERS, decoders, adj_matrix)
 
-        return encoders, decoders, worker_losses
+        return encoders, decoders, worker_losses, encoded_dim
     
 
 def classifier_training(encoder_model, mode: str, epochs: int, batch_size: int, encoded_dim: int, train_transform, adj_matrix, lr: float=1e-4):
