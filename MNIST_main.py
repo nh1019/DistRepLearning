@@ -11,6 +11,14 @@ import numpy as np
 DEVICE = 'cuda:0'
 N_WORKERS = 5
 
+def MNIST_main(args):
+
+    train_transform = {}
+
+    if args.model=='autoencoder' and args.model_training=='collaborative':
+        return 1
+
+
 def test_classifier(model, classifier, mode: str):
     if type(classifier)==list:
         classifiers = classifier
@@ -42,7 +50,7 @@ def test_classifier(model, classifier, mode: str):
                     
 
 def train_loop(model: str, mode: str, epochs: int, batch_size: int, train_transform, adj_matrix, encoded_dim: int=128, lr: float=1e-4):
-
+    #main training loop for encoding model
     if model=='autoencoder' and mode=='collaborative':
         encoders = [Encoder(encoded_dim).to(DEVICE) for k in range(N_WORKERS)]
         decoders = [Decoder(encoded_dim).to(DEVICE) for k in range(N_WORKERS)]
