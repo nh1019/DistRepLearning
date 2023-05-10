@@ -10,4 +10,4 @@ def plot_losses(epochs: int, losses: dict, title: str, output_dir=None):
     plt.legend()
 
     if output_dir is not None:
-        
+        return 1
