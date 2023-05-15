@@ -49,7 +49,7 @@ def test_classifier(model, classifier, mode: str):
             classifier.eval()
 
         testloaders = prepare_dataloaders(mode, batch_size=8, train=False)
-        worker_accuracies = {0: [], 1: [], 2: [], 3: [], 4: [], 5: []}
+        worker_accuracies = {0: [], 1: [], 2: [], 3: [], 4: []}
 
         for k in range(N_WORKERS):
             total = 0
@@ -69,7 +69,7 @@ def test_classifier(model, classifier, mode: str):
         return worker_accuracies
                     
 
-def train_loop(model: str, mode: str, epochs: int, batch_size: int, train_transform, adj_matrix, encoded_dim: int=128, lr: float=1e-4):
+def train_loop(model: str, mode: str, epochs: int, batch_size: int, train_transform, adj_matrix, encoded_dim: int=128, lr: float=1e-3):
     #main training loop for encoding model
     if model=='autoencoder' and mode=='collaborative':
         encoders = [Encoder(encoded_dim).to(DEVICE) for k in range(N_WORKERS)]
@@ -87,7 +87,7 @@ def train_loop(model: str, mode: str, epochs: int, batch_size: int, train_transf
         optimizers = [torch.optim.Adam(params, lr=lr) for params in params_to_optimize]
         schedulers = [torch.optim.lr_scheduler.StepLR(optimizer, step_size=20, gamma=0.9) for optimizer in optimizers]
 
-        worker_losses = {0: [], 1: [], 2: [], 3: [], 4: [], 5: []}
+        worker_losses = {0: [], 1: [], 2: [], 3: [], 4: []}
 
         for i in range(N_WORKERS):
             encoders[i].train()
@@ -118,11 +118,10 @@ def train_loop(model: str, mode: str, epochs: int, batch_size: int, train_transf
             #aggregate weights at the end of each epoch
             encoders = aggregate(N_WORKERS, encoders, adj_matrix)
             decoders = aggregate(N_WORKERS, decoders, adj_matrix)
-
         return encoders, decoders, worker_losses, encoded_dim
     
 
-def classifier_training(encoder_model, mode: str, epochs: int, batch_size: int, encoded_dim: int, train_transform, adj_matrix, lr: float=1e-4):
+def classifier_training(encoder_model, mode: str, epochs: int, batch_size: int, encoded_dim: int, train_transform, adj_matrix, lr: float=1e-3):
     if mode=='collaborative':
         #in this case encoder_model will be a list of encoders
         encoders = encoder_model
@@ -132,8 +131,8 @@ def classifier_training(encoder_model, mode: str, epochs: int, batch_size: int, 
         criterion = nn.CrossEntropyLoss()
         trainloaders = prepare_dataloaders(mode, batch_size, train_transform)
 
-        classifier_accuracies = {0: [], 1: [], 2: [], 3: [], 4: [], 5: []}
-        classifier_losses = {0: [], 1: [], 2: [], 3: [], 4: [], 5: []}
+        classifier_accuracies = {0: [], 1: [], 2: [], 3: [], 4: []}
+        classifier_losses = {0: [], 1: [], 2: [], 3: [], 4: []}
 
         for epoch in range(epochs):
             for k in range(N_WORKERS):
