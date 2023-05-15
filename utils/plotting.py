@@ -4,6 +4,7 @@ import os
 def plot_losses(epochs: int, losses: dict, title: str, output_dir=None):
     x = range(epochs)
     savefile = output_dir + '/' + title + '.png'
+    print(losses.keys)
     for key in losses.keys():
         plt.plot(x, losses[key], label='worker{}'.format(key))
     plt.title(title)
