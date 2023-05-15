@@ -19,6 +19,7 @@ def plot_losses(epochs: int, losses: dict, title: str, output_dir=None):
 
 def plot_accuracies(epochs: int, accuracies: dict, title: str, output_dir=None):
     x = range(epochs)
+    savefile = output_dir + '/' + title + '.png'
     for key in accuracies.keys():
         plt.plot(x, accuracies[key], label='worker{}'.format(key))
     plt.title(title)
@@ -27,6 +28,6 @@ def plot_accuracies(epochs: int, accuracies: dict, title: str, output_dir=None):
     plt.legend()
 
     if output_dir is not None:
-        plt.savefig(os.path.join(output_dir, title, '.png'))
+        plt.savefig(savefile)
     else:
         plt.show()
