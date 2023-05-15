@@ -5,6 +5,7 @@ from torchvision import datasets, transforms
 from torch.utils.data import DataLoader, Subset
 from utils.aggregate import aggregate, generate_graph
 from utils.plotting import plot_losses, plot_accuracies
+from utils.earlystopping import EarlyStopper
 from models.autoencoder import Encoder, Decoder
 from models.linear_classifier import LinearClassifier
 from tqdm import tqdm
@@ -71,6 +72,8 @@ def test_classifier(model, classifier, mode: str):
 
 def train_loop(model: str, mode: str, epochs: int, batch_size: int, train_transform, adj_matrix, encoded_dim: int=128, lr: float=1e-3):
     #main training loop for encoding model
+    es = EarlyStopper(min_delta=0.5)
+
     if model=='autoencoder' and mode=='collaborative':
         encoders = [Encoder(encoded_dim).to(DEVICE) for k in range(N_WORKERS)]
         decoders = [Decoder(encoded_dim).to(DEVICE) for k in range(N_WORKERS)]
@@ -115,6 +118,10 @@ def train_loop(model: str, mode: str, epochs: int, batch_size: int, train_transf
                         print(f'In epoch {epoch} for worker {k}, average training loss is {avg_train_loss}.')
                         worker_losses[k].append(avg_train_loss)
 
+            #check whether to stop early 
+            curr_average = np.mean([worker_losses[k][epoch] for k in worker_losses.keys()])
+            if es.early_stop(curr_average):
+                break
             #aggregate weights at the end of each epoch
             encoders = aggregate(N_WORKERS, encoders, adj_matrix)
             decoders = aggregate(N_WORKERS, decoders, adj_matrix)
@@ -122,6 +129,8 @@ def train_loop(model: str, mode: str, epochs: int, batch_size: int, train_transf
     
 
 def classifier_training(encoder_model, mode: str, epochs: int, batch_size: int, encoded_dim: int, train_transform, adj_matrix, lr: float=1e-3):
+    es = EarlyStopper(min_delta=0.2)
+    
     if mode=='collaborative':
         #in this case encoder_model will be a list of encoders
         encoders = encoder_model
@@ -164,7 +173,11 @@ def classifier_training(encoder_model, mode: str, epochs: int, batch_size: int, 
                         print(f'In epoch {epoch} for worker {k}, average training loss is {avg_train_loss}, average training accuracy is {avg_train_acc}%.')
                         classifier_losses[k].append(avg_train_loss)
                         classifier_accuracies[k].append(avg_train_acc)
-
+            
+            curr_average = np.mean([classifier_losses[k][epoch] for k in classifier_losses.keys()])
+            if es.early_stop(curr_average):
+                break
+            
             classifiers = aggregate(N_WORKERS, classifiers, adj_matrix)
 
         return classifiers, classifier_losses, classifier_accuracies
