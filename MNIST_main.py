@@ -28,6 +28,8 @@ def MNIST_main(args):
     if args.classifier=='linear':
         if args.classifier_training=='collaborative':
             classifiers, classifier_losses, classifier_accuracies = classifier_training(encoders, args.classifier_training, args.classifier_epochs, 16, encoded_dim, train_transform, adj_matrix)
+            print('classifier losses')
+            print(classifier_losses)
             plot_losses(args.classifier_epochs, classifier_losses, 'Collaborative_Autoencoder_Classifier_Losses', args.output)
             plot_accuracies(args.classifier_epochs, classifier_accuracies, 'Collaborative_Autoencoder_Classifier_Accuracies', args.output)
     
