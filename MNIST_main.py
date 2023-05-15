@@ -24,13 +24,13 @@ def MNIST_main(args):
 
         if args.model_training=='collaborative':
             encoders, _, losses, encoded_dim = train_loop(args.model, args.model_training, args.model_epochs, 16, train_transform, adj_matrix)
-            plot_losses(args.model_epochs, losses, 'Collaborative_Autoencoder_MSE_Losses', args.output)
+            plot_losses(losses, 'Collaborative_Autoencoder_MSE_Losses', args.output)
         
     if args.classifier=='linear':
         if args.classifier_training=='collaborative':
             classifiers, classifier_losses, classifier_accuracies = classifier_training(encoders, args.classifier_training, args.classifier_epochs, 16, encoded_dim, train_transform, adj_matrix)
-            plot_losses(args.classifier_epochs, classifier_losses, 'Collaborative_Autoencoder_Classifier_Losses', args.output)
-            plot_accuracies(args.classifier_epochs, classifier_accuracies, 'Collaborative_Autoencoder_Classifier_Accuracies', args.output)
+            plot_losses(classifier_losses, 'Collaborative_Autoencoder_Classifier_Losses', args.output)
+            plot_accuracies(classifier_accuracies, 'Collaborative_Autoencoder_Classifier_Accuracies', args.output)
     
     if args.testing=='local':
         test_accuracies = test_classifier(encoders, classifiers, args.testing)
@@ -177,7 +177,7 @@ def classifier_training(encoder_model, mode: str, epochs: int, batch_size: int, 
             curr_average = np.mean([classifier_losses[k][epoch] for k in classifier_losses.keys()])
             if es.early_stop(curr_average):
                 break
-            
+
             classifiers = aggregate(N_WORKERS, classifiers, adj_matrix)
 
         return classifiers, classifier_losses, classifier_accuracies

@@ -1,9 +1,9 @@
 from matplotlib import pyplot as plt
 import os
 
-def plot_losses(epochs: int, losses: dict, title: str, output_dir=None):
+def plot_losses(losses: dict, title: str, output_dir=None):
     plt.clf()
-    x = range(epochs)
+    x = range(len(losses[0]))
     savefile = output_dir + '/' + title + '.png'
     for key in losses.keys():
         plt.plot(x, losses[key], label='worker{}'.format(key))
@@ -18,9 +18,9 @@ def plot_losses(epochs: int, losses: dict, title: str, output_dir=None):
     else:
         plt.show()
 
-def plot_accuracies(epochs: int, accuracies: dict, title: str, output_dir=None):
+def plot_accuracies(accuracies: dict, title: str, output_dir=None):
     plt.clf()
-    x = range(epochs)
+    x = range(len(accuracies[0]))
     savefile = output_dir + '/' + title + '.png'
     for key in accuracies.keys():
         plt.plot(x, accuracies[key], label='worker{}'.format(key))
