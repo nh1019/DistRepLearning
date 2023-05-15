@@ -121,6 +121,7 @@ def train_loop(model: str, mode: str, epochs: int, batch_size: int, train_transf
             #check whether to stop early 
             curr_average = np.mean([worker_losses[k][epoch] for k in worker_losses.keys()])
             if es.early_stop(curr_average):
+                print(f'Stopped training autoencoder after epoch {epoch}.')
                 break
             #aggregate weights at the end of each epoch
             encoders = aggregate(N_WORKERS, encoders, adj_matrix)
@@ -136,9 +137,12 @@ def classifier_training(encoder_model, mode: str, epochs: int, batch_size: int, 
         encoders = encoder_model
         classifiers = [LinearClassifier(encoded_dim, 10).to(DEVICE) for k in range(N_WORKERS)]
         optimizers = [torch.optim.Adam(classifier.parameters(), lr=lr) for classifier in classifiers]
-        schedulers = [torch.optim.lr_scheduler.StepLR(optimizer, step_size=20, gamma=0.9) for optimizer in optimizers]
+        #schedulers = [torch.optim.lr_scheduler.StepLR(optimizer, step_size=20, gamma=0.9) for optimizer in optimizers]
         criterion = nn.CrossEntropyLoss()
         trainloaders = prepare_dataloaders(mode, batch_size, train_transform)
+
+        for classifier in classifiers:
+            classifier.train()
 
         classifier_accuracies = {0: [], 1: [], 2: [], 3: [], 4: []}
         classifier_losses = {0: [], 1: [], 2: [], 3: [], 4: []}
@@ -160,7 +164,7 @@ def classifier_training(encoder_model, mode: str, epochs: int, batch_size: int, 
                     curr_loss.append(loss.item())
                     loss.backward()
                     optimizers[k].step()
-                    schedulers[k].step()
+                    #schedulers[k].step()
 
                     #check prediction accuracy
                     _, predicted = torch.max(classifier_output.data, 1)
@@ -176,6 +180,7 @@ def classifier_training(encoder_model, mode: str, epochs: int, batch_size: int, 
             
             curr_average = np.mean([classifier_losses[k][epoch] for k in classifier_losses.keys()])
             if es.early_stop(curr_average):
+                print(f'Stopped training classifier after epoch {epoch}.')
                 break
 
             classifiers = aggregate(N_WORKERS, classifiers, adj_matrix)
