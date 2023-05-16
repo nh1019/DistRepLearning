@@ -1,10 +1,11 @@
 from matplotlib import pyplot as plt
 import os
 
-def plot_losses(losses: dict, title: str, output_dir=None):
+def plot_and_save_losses(losses: dict, title: str, output_dir=None):
     plt.clf()
     x = range(len(losses[0]))
-    savefile = output_dir + '/' + title + '.png'
+    plot_file = output_dir + '/' + title + '.png'
+    csv_file = output_dir + '/' + title + '.csv'
     for key in losses.keys():
         plt.plot(x, losses[key], label='worker{}'.format(key))
     plt.title(title)
@@ -13,15 +14,19 @@ def plot_losses(losses: dict, title: str, output_dir=None):
     plt.legend()
 
     if output_dir is not None:
-        #plt.savefig(os.path.join(output_dir, title, '.png'))
-        plt.savefig(savefile)
+        plt.savefig(plot_file)
+
+        with open(csv_file, 'w') as f:
+            for key in losses.keys():
+                f.write('{},{:.2f}\n'.format(key, losses[key]))
     else:
         plt.show()
 
-def plot_accuracies(accuracies: dict, title: str, output_dir=None):
+def plot_and_save_accuracies(accuracies: dict, title: str, output_dir=None):
     plt.clf()
     x = range(len(accuracies[0]))
-    savefile = output_dir + '/' + title + '.png'
+    plot_file = output_dir + '/' + title + '.png'
+    csv_file = output_dir + '/' + title + '.csv'
     for key in accuracies.keys():
         plt.plot(x, accuracies[key], label='worker{}'.format(key))
     plt.title(title)
@@ -30,6 +35,10 @@ def plot_accuracies(accuracies: dict, title: str, output_dir=None):
     plt.legend()
 
     if output_dir is not None:
-        plt.savefig(savefile)
+        plt.savefig(plot_file)
+
+        with open(csv_file, 'w') as f:
+            for key in accuracies.keys():
+                f.write('{},{:.2f}\n'.format(key, accuracies[key]))
     else:
         plt.show()
