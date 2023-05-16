@@ -131,61 +131,120 @@ def train_loop(model: str, mode: str, epochs: int, batch_size: int, train_transf
 
 def classifier_training(encoder_model, mode: str, epochs: int, batch_size: int, encoded_dim: int, train_transform, adj_matrix, lr: float=1e-3):
     es = EarlyStopper(min_delta=0.2)
-    
-    if mode=='collaborative':
         #in this case encoder_model will be a list of encoders
-        encoders = encoder_model
-        classifiers = [LinearClassifier(encoded_dim, 10).to(DEVICE) for k in range(N_WORKERS)]
-        optimizers = [torch.optim.Adam(classifier.parameters(), lr=lr) for classifier in classifiers]
-        #schedulers = [torch.optim.lr_scheduler.StepLR(optimizer, step_size=20, gamma=0.9) for optimizer in optimizers]
-        criterion = nn.CrossEntropyLoss()
-        trainloaders = prepare_dataloaders(mode, batch_size, train_transform)
+    encoders = encoder_model
+    classifiers = [LinearClassifier(encoded_dim, 10).to(DEVICE) for k in range(N_WORKERS)]
+    optimizers = [torch.optim.Adam(classifier.parameters(), lr=lr) for classifier in classifiers]
+    #schedulers = [torch.optim.lr_scheduler.StepLR(optimizer, step_size=20, gamma=0.9) for optimizer in optimizers]
+    criterion = nn.CrossEntropyLoss()
+    trainloaders = prepare_dataloaders(mode, batch_size, train_transform)
 
-        for classifier in classifiers:
-            classifier.train()
+    for classifier in classifiers:
+        classifier.train()
 
-        classifier_accuracies = {0: [], 1: [], 2: [], 3: [], 4: []}
-        classifier_losses = {0: [], 1: [], 2: [], 3: [], 4: []}
+    classifier_accuracies = {0: [], 1: [], 2: [], 3: [], 4: []}
+    classifier_losses = {0: [], 1: [], 2: [], 3: [], 4: []}
 
+    for epoch in range(epochs):
+        for k in range(N_WORKERS):
+            total = 0
+            correct = 0
+            curr_loss = []
+            trainloader = trainloaders[k]
+            for batch_idx, (features, labels) in tqdm(enumerate(trainloader)):
+                features, labels = features.to(DEVICE), labels.to(DEVICE)
+
+                optimizers[k].zero_grad()
+                reps = encoders[k](features)
+                classifier_output = classifiers[k](reps)
+                loss = criterion(classifier_output, labels)
+
+                curr_loss.append(loss.item())
+                loss.backward()
+                optimizers[k].step()
+                #schedulers[k].step()
+
+                #check prediction accuracy
+                _, predicted = torch.max(classifier_output.data, 1)
+                total += labels.size(0)
+                correct += (predicted==labels).sum().item()
+
+                if batch_idx%len(trainloader)==len(trainloader)-1:
+                    avg_train_loss = np.mean(curr_loss)
+                    avg_train_acc = (correct/total)*100
+                    print(f'In epoch {epoch} for worker {k}, average training loss is {avg_train_loss}, average training accuracy is {avg_train_acc}%.')
+                    classifier_losses[k].append(avg_train_loss)
+                    classifier_accuracies[k].append(avg_train_acc)
+        
+        curr_average = np.mean([classifier_losses[k][epoch] for k in classifier_losses.keys()])
+        if es.early_stop(curr_average):
+            print(f'Stopped training classifier after epoch {epoch}.')
+            break
+
+        if mode=='collaborative':
+            classifiers = aggregate(N_WORKERS, classifiers, adj_matrix)
+
+    return classifiers, classifier_losses, classifier_accuracies
+    
+def joint_encoder_classifier_training(mode: str, epochs: int, batch_size: int, train_transform, adj_matrix, encoded_dim: int=128, lr: float=1e-3):
+    es = EarlyStopper(min_delta=2)
+    encoders = [Encoder(encoded_dim).to(DEVICE) for k in range(N_WORKERS)]
+    classifiers = [LinearClassifier(encoded_dim).to(DEVICE) for k in range(N_WORKERS)]
+    criterion = nn.CrossEntropyLoss()
+
+    trainloaders = prepare_dataloaders(mode, batch_size, train_transform)
+
+    params_to_optimize = []
+
+    for i in range(N_WORKERS):
+        params_to_optimize.append([
+            {'params': encoders[i].parameters()},
+            {'params': classifiers[i].parameters()}
+        ])
+    
+    optimizers = [torch.optim.Adam(params, lr=lr) for params in params_to_optimize]
+
+    classifier_losses = {0: [], 1: [], 2: [], 3: [], 4: []}
+    classifier_accuracies = {0: [], 1: [], 2: [], 3: [], 4: []}
+
+    if mode=='collaborative':
         for epoch in range(epochs):
             for k in range(N_WORKERS):
                 total = 0
                 correct = 0
                 curr_loss = []
                 trainloader = trainloaders[k]
-                for batch_idx, (features, labels) in tqdm(enumerate(trainloader)):
+                for i, data in tqdm(enumerate(trainloader)):
+                    features, labels = data
                     features, labels = features.to(DEVICE), labels.to(DEVICE)
 
                     optimizers[k].zero_grad()
                     reps = encoders[k](features)
                     classifier_output = classifiers[k](reps)
                     loss = criterion(classifier_output, labels)
-
                     curr_loss.append(loss.item())
                     loss.backward()
                     optimizers[k].step()
-                    #schedulers[k].step()
 
-                    #check prediction accuracy
                     _, predicted = torch.max(classifier_output.data, 1)
                     total += labels.size(0)
                     correct += (predicted==labels).sum().item()
-
-                    if batch_idx%len(trainloader)==len(trainloader)-1:
+      
+                    if i%len(trainloader)==len(trainloader)-1:
                         avg_train_loss = np.mean(curr_loss)
-                        avg_train_acc = (correct/total)*100
-                        print(f'In epoch {epoch} for worker {k}, average training loss is {avg_train_loss}, average training accuracy is {avg_train_acc}%.')
+                        avg_train_acc = correct/total
+                        print(f'In epoch {epoch} for worker {k}, average training loss is {avg_train_loss}, average training acc is {avg_train_acc}.')
                         classifier_losses[k].append(avg_train_loss)
                         classifier_accuracies[k].append(avg_train_acc)
-            
+
             curr_average = np.mean([classifier_losses[k][epoch] for k in classifier_losses.keys()])
             if es.early_stop(curr_average):
-                print(f'Stopped training classifier after epoch {epoch}.')
+                print(f'Stopped training model after epoch {epoch}.')
                 break
-
-            classifiers = aggregate(N_WORKERS, classifiers, adj_matrix)
-
-        return classifiers, classifier_losses, classifier_accuracies
+                
+            if mode=='collaborative':
+                encoders = aggregate(N_WORKERS, encoders, adj_matrix)
+                classifiers = aggregate(N_WORKERS, classifiers, adj_matrix)
 
 def prepare_dataloaders(mode: str, batch_size: int, train_transform=None, train=True):
     test_transform = transforms.Compose([transforms.ToTensor()])

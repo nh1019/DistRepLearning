@@ -3,7 +3,8 @@ import os
 from MNIST_main import MNIST_main
 
 def main(args):
-    os.mkdir(args.output)
+    if not os.path.isdir(args.output):
+        os.mkdir(args.output)
 
     if args.dataset=='MNIST':
         MNIST_main(args)
