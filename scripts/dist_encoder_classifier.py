@@ -5,14 +5,14 @@ import numpy as np
 from tqdm import tqdm
 from torchvision.transforms import transforms
 
-from models.autoencoder import Encoder
-from models.linear_classifier import LinearClassifier
-from utils.prepare_dataloaders import prepare_MNIST, prepare_CIFAR
-from utils.aggregate import aggregate, generate_graph
-from utils.earlystopping import EarlyStopper
-from utils.save_config import save_config
-from utils.plotting import plot_losses, plot_accuracies, save_accuracies
-from test_classifier import test_classifier
+from ..models.autoencoder import Encoder
+from ..models.linear_classifier import LinearClassifier
+from ..utils.prepare_dataloaders import prepare_MNIST, prepare_CIFAR
+from ..utils.aggregate import aggregate, generate_graph
+from ..utils.earlystopping import EarlyStopper
+from ..utils.save_config import save_config
+from ..utils.plotting import plot_losses, plot_accuracies, save_accuracies
+from .test_classifier import test_classifier
 
 def main(args):
     save_config(args)
@@ -20,7 +20,7 @@ def main(args):
     #generate graph of worker nodes
     A = generate_graph(5)
 
-    encoders, classifiers, encoded_dim, classifier_losses, classifier_accuracies = train_EC(
+    encoders, classifiers, _, classifier_losses, classifier_accuracies = train_EC(
         mode=args.model_training,
         dataset=args.dataset,
         batch_size=16,
