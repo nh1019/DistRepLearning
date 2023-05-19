@@ -11,8 +11,8 @@ from utils.aggregate import aggregate, generate_graph
 from utils.earlystopping import EarlyStopper
 from utils.plotting import save_accuracies, plot_accuracies, plot_losses
 from utils.save_config import save_config
-
 from scripts.dist_classifier import train_classifier
+from scripts.test_classifier import test_classifier
 
 def main(args):
     save_config(args)
@@ -38,7 +38,16 @@ def main(args):
         train_transform=transform,
         adj_matrix=A)
     
-    plot_losses(classifier_losses, f'{args.classifier_training}')
+    plot_losses(classifier_losses, f'Autoencoder_{args.classifier_training}_Classifier_Losses', args.output)
+    plot_accuracies(classifier_accuracies, f'Autoencoder_{args.classifier_training}_Classifier_Accuracies', args.output)
+
+    test_accuracies = test_classifier(
+        model=encoders,
+        classifiers=classifiers,
+        dataset=args.dataset,
+        mode=args.testing)
+    
+    save_accuracies(test_accuracies, args.output)
 
 def train_AE(mode: str, dataset: str, batch_size: int, epochs: int, encoded_dim: int, adj_matrix, lr: float=1e-4, device: str='cuda:0', n_workers: int=5):
     train_transform = transforms.Compose([
