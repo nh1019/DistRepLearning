@@ -1,7 +1,7 @@
 from matplotlib import pyplot as plt
 import os
 
-def plot_and_save_losses(losses: dict, title: str, output_dir=None):
+def plot_losses(losses: dict, title: str, output_dir=None):
     plt.clf()
     x = range(len(losses[0]))
     plot_file = output_dir + '/' + title + '.png'
@@ -22,7 +22,7 @@ def plot_and_save_losses(losses: dict, title: str, output_dir=None):
     else:
         plt.show()
 
-def plot_and_save_accuracies(accuracies: dict, title: str, output_dir=None):
+def plot_accuracies(accuracies: dict, title: str, output_dir=None):
     plt.clf()
     x = range(len(accuracies[0]))
     plot_file = output_dir + '/' + title + '.png'
@@ -42,3 +42,9 @@ def plot_and_save_accuracies(accuracies: dict, title: str, output_dir=None):
                 f.write('{},{:.2f}\n'.format(key, accuracies[key]))
     else:
         plt.show()
+
+def save_accuracies(accuracies, output):
+    with open(os.path.join(output, 'test_accuracies'), 'w') as f:
+        for key in accuracies.keys():
+            f.write('{},{:.2f}\n'.format(key, accuracies[key]))
+

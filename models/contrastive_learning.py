@@ -30,6 +30,23 @@ class SimSiam(nn.Module):
         p2 = self.predictor(z2)
 
         return p1, p2, z1.detach(), z2.detach()
+    
+class SimCLR(nn.Module):
+    def __init__(self, encoder, out_dim=32):
+        super(SimCLR, self).__init__()
+
+        self.encoder = encoder
+
+        #mlp projection head
+        dim_mlp = 3*3*32
+        self.encoder.encoder_lin = nn.Sequential([
+            nn.Linear(dim_mlp, dim_mlp), 
+            nn.ReLU(),
+            self.encoder.encoder_lin
+        ])
+
+    def forward(self, x):
+        return self.encoder(x)
 
 #custom loss for SimCLR
 class InfoNCELoss(nn.Module):
