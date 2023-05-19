@@ -15,7 +15,7 @@ class Encoder(nn.Module):
             nn.ReLU(True),
             nn.Conv2d(16, 32, 3, stride=2, padding=0),
             nn.ReLU(True),
-            nn.MaxPool2d(kernel_size=2, stride=2)
+            #nn.MaxPool2d(kernel_size=2, stride=2)
         )
         
         ### Flatten layer
