@@ -20,9 +20,11 @@ class Encoder(nn.Module):
         
         ### Flatten layer
         self.flatten = nn.Flatten(start_dim=1)
+
         ### Linear section
+        self.lin_input = 7*7*32 if channels==1 else 8*8*32
         self.encoder_lin = nn.Sequential(
-            nn.Linear(7 * 7 * 32, 128),
+            nn.Linear(self.lin_input, 128),
             nn.ReLU(True),
             nn.Linear(128, encoded_space_dim),
         )
