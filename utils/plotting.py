@@ -18,7 +18,7 @@ def plot_losses(losses: dict, title: str, output_dir=None):
 
         with open(csv_file, 'w') as f:
             for key in losses.keys():
-                f.write('{},{:.2f}\n'.format(key, ', '.join(str(x) for x in losses[key])))
+                f.write('{},{}\n'.format(key, ', '.join(str(round(x, 4) for x in losses[key]))))
     else:
         plt.show()
 
@@ -39,7 +39,7 @@ def plot_accuracies(accuracies: dict, title: str, output_dir=None):
 
         with open(csv_file, 'w') as f:
             for key in accuracies.keys():
-                f.write('{},{:.2f}\n'.format(key, ', '.join(str(x) for x in accuracies[key])))
+                f.write('{},{}\n'.format(key, ', '.join(str(round(x, 2) for x in accuracies[key]))))
     else:
         plt.show()
 
