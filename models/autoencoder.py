@@ -40,7 +40,12 @@ class Decoder(nn.Module):
     def __init__(self, channels: int, encoded_space_dim: int, input_size: int=32):
         super().__init__()
 
-        self.lin_output = 7*7*32 if channels==1 else 8*8*32
+        if channels==1:
+            self.lin_output = 7*7*32
+            self.unflattened_size = (32, 7, 7)
+        else:
+            self.lin_output = 8*8*32
+            self.unflattened_size = (32, 8, 8)
 
         self.decoder_lin = nn.Sequential(
             nn.Linear(encoded_space_dim, 128),
@@ -49,7 +54,7 @@ class Decoder(nn.Module):
             nn.ReLU(True)
         )
 
-        self.unflatten = nn.Unflatten(dim=1)
+        self.unflatten = nn.Unflatten(dim=1, unflattened_size=self.unflattened_size)
 
         self.decoder_conv = nn.Sequential(
             nn.ConvTranspose2d(32, 16, 3, stride=2, padding=1, output_padding=1),
