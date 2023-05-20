@@ -36,13 +36,13 @@ def main(args):
     save_accuracies(test_accuracies, args.output)
 
 
-def train_EC(mode: str, dataset: str, batch_size: int, epochs: int, encoded_dim: int, adj_matrix, lr: float=1e-4, device: str='cuda:0', n_workers: int=5):
+def train_EC(mode: str, dataset: str, batch_size: int, epochs: int, encoded_dim: int, adj_matrix, lr: float=1e-3, device: str='cuda:0', n_workers: int=5):
     train_transform = transforms.Compose([
             transforms.RandomHorizontalFlip(p=0.3),
             transforms.ToTensor()
         ])
 
-    es = EarlyStopper(min_delta=2)
+    es = EarlyStopper(min_delta=0.5)
 
     if dataset=='MNIST':
         channels = 1
