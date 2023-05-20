@@ -56,7 +56,9 @@ def prepare_CIFAR(mode: str, batch_size: int, train_transform=None, train=True):
             #separate data among workers by class
             worker_datasets = []
             for classes in worker_classes:
-                idx = torch.cat([torch.where(train_dataset.targets==c)[0] for c in classes])
+                #need to convert list of targets to tensor
+                targets_tensor = torch.tensor(train_dataset.targets)
+                idx = torch.cat([torch.where(targets_tensor==c)[0] for c in classes])
                 worker_datasets.append(Subset(train_dataset, idx))
 
             trainloaders = []
@@ -71,7 +73,8 @@ def prepare_CIFAR(mode: str, batch_size: int, train_transform=None, train=True):
         if mode=='local':
             test_datasets = []
             for classes in worker_classes:
-                idx = torch.cat([torch.where(test_dataset.targets==c)[0] for c in classes])
+                targets_tensor = torch.tensor(test_dataset.targets)
+                idx = torch.cat([torch.where(targets_tensor==c)[0] for c in classes])
                 test_datasets.append(Subset(test_dataset, idx))
             
             testloaders = []

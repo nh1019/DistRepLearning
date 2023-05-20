@@ -7,24 +7,24 @@ class Encoder(nn.Module):
         
         ### Convolutional section
         self.encoder_cnn = nn.Sequential(
-            nn.Conv2d(channels, 8, 3, stride=2, padding=1),
+            nn.Conv2d(channels, 8, 3, stride=1, padding=1),
             nn.ReLU(True),
             nn.MaxPool2d(kernel_size=2, stride=2),
-            nn.Conv2d(8, 16, 3, stride=2, padding=1),
+            nn.Conv2d(8, 16, 3, stride=1, padding=1),
             nn.BatchNorm2d(16),
             nn.ReLU(True),
-            nn.Conv2d(16, 32, 3, stride=2, padding=0),
-            nn.ReLU(True),
-            #nn.MaxPool2d(kernel_size=2, stride=2)
+            nn.MaxPool2d(kernel_size=2, stride=2),
+            nn.Conv2d(16, 32, 3, stride=1, padding=1),
+            nn.ReLU(True)
         )
         
         ### Flatten layer
         self.flatten = nn.Flatten(start_dim=1)
         ### Linear section
         self.encoder_lin = nn.Sequential(
-            nn.Linear(32*(output_size//8)**2, 128),
+            nn.Linear(7 * 7 * 32, 128),
             nn.ReLU(True),
-            nn.Linear(128, encoded_space_dim)
+            nn.Linear(128, encoded_space_dim),
         )
         
     def forward(self, x):
