@@ -18,7 +18,7 @@ def main(args):
     save_config(args)
     A = generate_graph(5)
 
-    encoders, AE_losses, encoded_dim, transform = train_AE(
+    encoders, AE_losses, encoded_dim = train_AE(
         mode=args.model_training,
         dataset=args.dataset,
         batch_size=16,
@@ -35,7 +35,6 @@ def main(args):
         epochs=args.classifier_epochs,
         batch_size=16,
         encoded_dim=encoded_dim,
-        train_transform=transform,
         adj_matrix=A)
     
     plot_losses(classifier_losses, f'Autoencoder_{args.classifier_training}_Classifier_Losses', args.output)
@@ -59,7 +58,7 @@ def train_AE(mode: str, dataset: str, batch_size: int, epochs: int, encoded_dim:
         channels = 1
         trainloaders = prepare_MNIST(mode, batch_size, train_transform)
     elif dataset=='CIFAR':
-        channels = 2
+        channels = 3
         trainloaders = prepare_CIFAR(mode, batch_size, train_transform)
 
     worker_losses = {0: [], 1: [], 2: [], 3: [], 4: []}
@@ -115,7 +114,7 @@ def train_AE(mode: str, dataset: str, batch_size: int, epochs: int, encoded_dim:
             encoders = aggregate(n_workers, encoders, adj_matrix)
             decoders = aggregate(n_workers, decoders, adj_matrix)
 
-    return encoders, worker_losses, encoded_dim, train_transform
+    return encoders, worker_losses, encoded_dim
 
 if __name__=='__main__':
     parser = argparse.ArgumentParser()
