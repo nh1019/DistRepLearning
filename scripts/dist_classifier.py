@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+from torchvision import transforms
 from tqdm import tqdm
 import numpy as np
 
@@ -9,7 +10,13 @@ from utils.aggregate import aggregate
 from utils.prepare_dataloaders import prepare_MNIST, prepare_CIFAR
 
 
-def train_classifier(model, dataset: str, mode: str, epochs: int, batch_size: int, encoded_dim: int, train_transform, adj_matrix, lr: float=1e-3, device: str='cuda:0', n_workers: int=5):
+def train_classifier(model, dataset: str, mode: str, epochs: int, batch_size: int, encoded_dim: int, adj_matrix, train_transform=None, lr: float=1e-3, device: str='cuda:0', n_workers: int=5):
+    if train_transform is None:
+        train_transform = transforms.Compose([
+            transforms.ToTensor(),
+            transforms.Normalize((.5,), (.5,))
+        ])
+
     es = EarlyStopper(min_delta=0.2)
 
     if dataset=='MNIST':

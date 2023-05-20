@@ -1,3 +1,4 @@
+import argparse
 import torch
 import torch.nn as nn
 from torchvision import transforms
@@ -7,8 +8,47 @@ import numpy as np
 from models.contrastive_learning import SimCLR, InfoNCELoss, TwoCropsTransform
 from models.autoencoder import Encoder
 from utils.earlystopping import EarlyStopper
-from utils.aggregate import aggregate
+from utils.aggregate import aggregate, generate_graph
 from utils.prepare_dataloaders import prepare_MNIST, prepare_CIFAR
+from utils.save_config import save_config
+from utils.plotting import *
+from scripts.dist_classifier import train_classifier
+from scripts.test_classifier import test_classifier
+
+def main(args):
+    save_config(args)
+
+    A = generate_graph(5)
+
+    encoders, losses = train_simCLR(
+        mode=args.model_training,
+        dataset=args.dataset,
+        batch_size=256,
+        epochs=args.model_epochs,
+        encoded_dim=args.encoded_dim,
+        adj_matrix=A)
+    
+    plot_losses(losses, f'{args.model_training}_SimCLR_Losses', args.output)
+    
+    classifiers, classifier_losses, classifier_accuracies = train_classifier(
+        model=encoders,
+        dataset=args.dataset,
+        mode=args.classifier_training,
+        epochs=args.classifier_epochs,
+        batch_size=16,
+        encoded_dim=args.encoded_dim,
+        adj_matrix=A)
+    
+    plot_losses(classifier_losses, f'{args.model_training}_SimCLR_{args.classifier_training}_Classifier_Losses', args.output)
+    plot_accuracies(classifier_accuracies, f'{args.model_training}_SimCLR_{args.classifier_training}_Classifier_Accuracies', args.output)
+
+    test_accuracies = test_classifier(
+        model=encoders,
+        classifier=classifiers,
+        dataset=args.dataset,
+        mode=args.testing)
+    
+    save_accuracies(test_accuracies, args.output)
 
 def train_simCLR(mode: str, dataset: str, epochs: int, batch_size: int, adj_matrix, encoded_dim: int=128, lr: float=1e-3, device: str='cuda:0', n_workers: int=5):
     train_transform = transforms.Compose([
@@ -70,3 +110,18 @@ def train_simCLR(mode: str, dataset: str, epochs: int, batch_size: int, adj_matr
     return encoders, worker_losses
 
 
+if __name__=='__main__':
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument('--model_training', type=str, help='choose between collaborative, non-collaborative, and centralized', required=True)
+    parser.add_argument('--model_epochs', type=int, help='choose how many epochs to train the model for', required=True)
+    parser.add_argument('--encoded_dim', type=int, help='specify dimension of encoded representations', required=True)
+    parser.add_argument('--classifier_training', type=str, help='choose between collaborative and non-collaborative', required=True)
+    parser.add_argument('--classifier_epochs', type=int, help='choose how many epochs to train the classifier for', required=True)
+    parser.add_argument('--testing', type=str, help='choose between local and global (determines the data on which the classifier is tested)', required=True)
+    parser.add_argument('--dataset', type=str, help='choose between MNIST and CIFAR (CIFAR-10)', required=True)
+    parser.add_argument('--output', type=str, help='specify a folder for output files', required=True)
+
+    args = parser.parse_args()
+
+    main(args)
