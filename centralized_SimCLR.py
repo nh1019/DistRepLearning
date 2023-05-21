@@ -5,30 +5,26 @@ from torchvision import transforms
 from tqdm import tqdm
 import numpy as np
 
-from models.contrastive_learning import SimSiam, TwoCropsTransform
+from models.contrastive_learning import SimCLR, InfoNCELoss, TwoCropsTransform
 from models.autoencoder import Encoder
 from utils.earlystopping import EarlyStopper
-from utils.aggregate import aggregate, generate_graph
 from utils.prepare_dataloaders import prepare_MNIST, prepare_CIFAR
-from utils.plotting import *
 from utils.save_config import save_config
-from scripts.dist_classifier import train_classifier
+from utils.plotting import *
+from scripts.centralized_classifier import train_classifier
 from scripts.test_classifier import test_classifier
 
 def main(args):
     save_config(args)
 
-    A = generate_graph(5)
-
-    encoders, losses = train_SimSiam(
+    encoders, losses = train_simCLR(
         mode=args.model_training,
         dataset=args.dataset,
         batch_size=256,
         epochs=args.model_epochs,
-        encoded_dim=args.encoded_dim,
-        adj_matrix=A)
+        encoded_dim=args.encoded_dim)
     
-    plot_losses(losses, f'{args.model_training}_SimSiam_Losses', args.output)
+    plot_losses(losses, f'{args.model_training}_SimCLR_Losses', args.output)
     
     classifiers, classifier_losses, classifier_accuracies = train_classifier(
         model=encoders,
@@ -36,12 +32,10 @@ def main(args):
         mode=args.classifier_training,
         epochs=args.classifier_epochs,
         batch_size=16,
-        encoded_dim=args.encoded_dim,
-        adj_matrix=A,
-        simsiam=True)
+        encoded_dim=args.encoded_dim)
     
-    plot_losses(classifier_losses, f'{args.model_training}_SimSiam_{args.classifier_training}_Classifier_Losses', args.output)
-    plot_accuracies(classifier_accuracies, f'{args.model_training}_SimSiam_{args.classifier_training}_Classifier_Accuracies', args.output)
+    plot_losses(classifier_losses, f'{args.model_training}_SimCLR_{args.classifier_training}_Classifier_Losses', args.output)
+    plot_accuracies(classifier_accuracies, f'{args.model_training}_SimCLR_{args.classifier_training}_Classifier_Accuracies', args.output)
 
     test_accuracies = test_classifier(
         model=encoders,
@@ -51,8 +45,7 @@ def main(args):
     
     save_accuracies(test_accuracies, args.output)
 
-
-def train_SimSiam(mode: str, dataset: str, epochs: int, batch_size: int, adj_matrix, encoded_dim: int=128, lr: float=1e-3, device: str='cuda:0', n_workers: int=5):
+def train_simCLR(mode: str, dataset: str, epochs: int, batch_size: int, adj_matrix, encoded_dim: int=128, lr: float=1e-3, device: str='cuda:0'):
     train_transform = transforms.Compose([
         transforms.RandomApply([transforms.ColorJitter(0.4, 0.4, 0.4, 0.1)], p=0.8),
         transforms.RandomGrayscale(p=0.2),
@@ -60,55 +53,51 @@ def train_SimSiam(mode: str, dataset: str, epochs: int, batch_size: int, adj_mat
         transforms.RandomHorizontalFlip(),
         transforms.ToTensor()
     ])
-    
+
     es = EarlyStopper(min_delta=0.5)
-    worker_losses = {0: [], 1: [], 2: [], 3: [], 4: []}
+    epoch_losses = {0: [], 1: [], 2: [], 3: [], 4: []}
     
     if dataset=='MNIST':
         channels = 1
-        trainloaders = prepare_MNIST(mode, batch_size, TwoCropsTransform(train_transform))
+        trainloader = prepare_MNIST(mode, batch_size, TwoCropsTransform(train_transform))
     elif dataset=='CIFAR':
         channels = 3
-        trainloaders = prepare_CIFAR(mode, batch_size, TwoCropsTransform(train_transform))
+        trainloader = prepare_CIFAR(mode, batch_size, TwoCropsTransform(train_transform))
 
-    encoders = [Encoder(channels, encoded_dim).to(device) for k in range(n_workers)]
-    models = [SimSiam(encoder, dim=encoded_dim, pred_dim=encoded_dim//4).to(device) for encoder in encoders]
-    optimizers = [torch.optim.Adam(model.parameters(), lr=lr) for model in models]
-    criterion = nn.CosineSimilarity(dim=1)
+    encoder = Encoder(channels, encoded_dim).to(device)
+    model = SimCLR(encoder, channels).to(device)
+    optimizer = torch.optim.Adam(model.parameters(), lr=lr) 
+    custom_loss = InfoNCELoss(device, batch_size)
+    criterion = nn.CrossEntropyLoss()
 
-    for model in models:
-        model.train()
+    model.train()
 
     for epoch in range(epochs):
-        for k in range(n_workers):
-            curr_loss = []
-            trainloader = trainloaders[k]
-            for batch_idx, (images, _) in tqdm(enumerate(trainloader)):
-                images[0] = images[0].to(device)
-                images[1] = images[1].to(device)
+        curr_loss = []
+        trainloader = trainloader
+        for batch_idx, (images, _) in tqdm(enumerate(trainloader)):
+            images = torch.cat(images, dim=0)
+            images = images.to(device)
 
-                p1, p2, z1, z2 = models[k](images[0], images[1])
-                loss = -0.5*(criterion(p1, z2).mean() + criterion(p2, z1).mean())
-                curr_loss.append(loss.item())
+            features = model(images)
+            logits, labels = custom_loss(features)
+            loss = criterion(logits, labels)
 
-                optimizers[k].zero_grad()
-                loss.backward()
-                optimizers[k].step()
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
 
-                if batch_idx%len(trainloader)==len(trainloader)-1:
-                    avg_train_loss = np.mean(curr_loss)
-                    print(f'In epoch {epoch} for worker {k}, average training loss is {avg_train_loss}.')
-                    worker_losses[k].append(avg_train_loss)
+            if batch_idx%len(trainloader)==len(trainloader)-1:
+                avg_train_loss = np.mean(curr_loss)
+                print(f'In epoch {epoch}, average training loss is {avg_train_loss}.')
+                epoch_losses.append(avg_train_loss)
 
-        curr_average = np.mean([worker_losses[k][epoch] for k in worker_losses.keys()])
-        if es.early_stop(curr_average):
+        if es.early_stop(avg_train_loss):
             print(f'Stopped training autoencoder after epoch {epoch}.')
             break
-            
-        if mode=='collaborative':
-            models = aggregate(n_workers, models, adj_matrix)
 
-    return models, worker_losses
+    return encoder, epoch_losses
+
 
 if __name__=='__main__':
     parser = argparse.ArgumentParser()

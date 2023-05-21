@@ -48,7 +48,7 @@ def main(args):
     
     save_accuracies(test_accuracies, args.output)
 
-def train_AE(mode: str, dataset: str, batch_size: int, epochs: int, encoded_dim: int, adj_matrix, lr: float=1e-4, device: str='cuda:0', n_workers: int=5):
+def train_AE(mode: str, dataset: str, batch_size: int, epochs: int, encoded_dim: int, adj_matrix, lr: float=1e-3, device: str='cuda:0', n_workers: int=5):
     train_transform = transforms.Compose([
             transforms.RandomHorizontalFlip(p=0.3),
             transforms.ToTensor()
@@ -76,7 +76,7 @@ def train_AE(mode: str, dataset: str, batch_size: int, epochs: int, encoded_dim:
 
     criterion = nn.MSELoss()
     optimizers = [torch.optim.Adam(params, lr=lr) for params in params_to_optimize]
-    schedulers = [torch.optim.lr_scheduler.StepLR(optimizer, step_size=20, gamma=0.9) for optimizer in optimizers]
+    schedulers = [torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, patience=3) for optimizer in optimizers]
 
     for i in range(n_workers):
         encoders[i].train()
@@ -97,7 +97,7 @@ def train_AE(mode: str, dataset: str, batch_size: int, epochs: int, encoded_dim:
                 curr_loss.append(loss.item())
                 loss.backward()
                 optimizers[k].step()
-                schedulers[k].step()
+                schedulers[k].step(loss)
 
                 if batch_idx%len(trainloader)==len(trainloader)-1:
                     avg_train_loss = np.mean(curr_loss)
