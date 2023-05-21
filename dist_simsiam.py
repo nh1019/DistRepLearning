@@ -51,7 +51,7 @@ def main(args):
     save_accuracies(test_accuracies, args.output)
 
 
-def train_SimSiam(mode: str, dataset: str, epochs: int, batch_size: int, train_transform, adj_matrix, encoded_dim: int=128, lr: float=1e-3, device: str='cuda:0', n_workers: int=5):
+def train_SimSiam(mode: str, dataset: str, epochs: int, batch_size: int, adj_matrix, encoded_dim: int=128, lr: float=1e-3, device: str='cuda:0', n_workers: int=5):
     train_transform = transforms.Compose([
         transforms.RandomApply([transforms.ColorJitter(0.4, 0.4, 0.4, 0.1)], p=0.8),
         transforms.RandomGrayscale(p=0.2),
@@ -70,8 +70,8 @@ def train_SimSiam(mode: str, dataset: str, epochs: int, batch_size: int, train_t
         channels = 3
         trainloaders = prepare_CIFAR(mode, batch_size, TwoCropsTransform(train_transform))
 
-    encoders = [Encoder(channels, encoded_dim) for k in range(n_workers)]
-    models = [SimSiam(encoder, dim=encoded_dim, pred_dim=encoded_dim/4) for encoder in encoders]
+    encoders = [Encoder(channels, encoded_dim).to(device) for k in range(n_workers)]
+    models = [SimSiam(encoder, dim=encoded_dim, pred_dim=encoded_dim/4).to(device) for encoder in encoders]
     optimizers = [torch.optim.Adam(model.parameters(), lr=lr) for model in models]
     criterion = nn.CosineSimilarity(dim=1)
 
