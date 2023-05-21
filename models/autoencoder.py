@@ -31,7 +31,9 @@ class Encoder(nn.Module):
         
     def forward(self, x):
         x = self.encoder_cnn(x)
+        print(x.shape)
         x = self.flatten(x)
+        print(x.shape)
         x = self.encoder_lin(x)
         return x
 
