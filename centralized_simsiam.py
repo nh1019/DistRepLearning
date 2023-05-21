@@ -11,7 +11,7 @@ from utils.earlystopping import EarlyStopper
 from utils.prepare_dataloaders import prepare_MNIST, prepare_CIFAR
 from utils.plotting import *
 from utils.save_config import save_config
-from scripts.dist_classifier import train_classifier
+from scripts.centralized_classifier import train_classifier
 from scripts.test_classifier import test_classifier
 
 def main(args):
@@ -26,7 +26,7 @@ def main(args):
     
     plot_losses(losses, f'{args.model_training}_SimSiam_Losses', args.output)
     
-    classifiers, classifier_losses, classifier_accuracies = train_classifier(
+    classifier, classifier_losses, classifier_accuracies = train_classifier(
         model=encoders,
         dataset=args.dataset,
         mode=args.classifier_training,
@@ -40,7 +40,7 @@ def main(args):
 
     test_accuracies = test_classifier(
         model=encoders,
-        classifier=classifiers,
+        classifier=classifier,
         dataset=args.dataset,
         mode=args.testing)
     

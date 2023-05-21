@@ -26,7 +26,7 @@ def main(args):
     
     plot_losses(losses, f'{args.model_training}_SimCLR_Losses', args.output)
     
-    classifiers, classifier_losses, classifier_accuracies = train_classifier(
+    classifier, classifier_losses, classifier_accuracies = train_classifier(
         model=encoders,
         dataset=args.dataset,
         mode=args.classifier_training,
@@ -39,7 +39,7 @@ def main(args):
 
     test_accuracies = test_classifier(
         model=encoders,
-        classifier=classifiers,
+        classifier=classifier,
         dataset=args.dataset,
         mode=args.testing)
     
