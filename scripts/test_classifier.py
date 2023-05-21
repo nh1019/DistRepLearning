@@ -19,7 +19,7 @@ def test_classifier(model, classifier, dataset: str, mode: str, device: str='cud
     for k in range(n_workers):
         total = 0
         correct = 0
-        testloader = testloaders[k]
+        testloader = testloaders[k] if mode=='local' else testloaders
         with torch.no_grad():
             for (features, labels) in testloader:
                 features, labels = features.to(device), labels.to(device)

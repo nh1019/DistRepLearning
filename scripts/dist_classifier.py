@@ -10,7 +10,7 @@ from utils.aggregate import aggregate
 from utils.prepare_dataloaders import prepare_MNIST, prepare_CIFAR
 
 
-def train_classifier(model, dataset: str, mode: str, epochs: int, batch_size: int, encoded_dim: int, adj_matrix, train_transform=None, lr: float=1e-3, device: str='cuda:0', n_workers: int=5):
+def train_classifier(model, dataset: str, mode: str, epochs: int, batch_size: int, encoded_dim: int, adj_matrix, train_transform=None, lr: float=1e-3, device: str='cuda:0', n_workers: int=5, simsiam=False):
     if train_transform is None:
         train_transform = transforms.Compose([
             transforms.ToTensor(),
@@ -24,7 +24,11 @@ def train_classifier(model, dataset: str, mode: str, epochs: int, batch_size: in
     elif dataset=='CIFAR':
         trainloaders = prepare_CIFAR(mode, batch_size, train_transform)
 
-    models = model
+    if simsiam:
+        models = [model.encoder for model in models]
+    else:
+        models = model
+        
     classifiers = [LinearClassifier(encoded_dim, 10).to(device) for k in range(n_workers)]
     optimizers = [torch.optim.Adam(classifier.parameters(), lr=lr) for classifier in classifiers]
     #schedulers = [torch.optim.lr_scheduler.StepLR(optimizer, step_size=20, gamma=0.9) for optimizer in optimizers]
