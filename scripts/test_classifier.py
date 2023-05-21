@@ -2,9 +2,13 @@ import torch
 
 from utils.prepare_dataloaders import prepare_MNIST, prepare_CIFAR
 
-def test_classifier(model, classifier, dataset: str, mode: str, device: str='cuda:0', n_workers: int=5):
+def test_classifier(model, classifier, dataset: str, mode: str, device: str='cuda:0', n_workers: int=5, simsiam=False):
     classifiers = classifier
-    encoders = model
+
+    if simsiam:
+        encoders = [encoder.encoder for encoder in model]
+    else:
+        encoders = model
     
     for classifier in classifiers:
         classifier.eval()
