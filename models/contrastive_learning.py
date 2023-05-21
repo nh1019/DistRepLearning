@@ -39,11 +39,11 @@ class SimCLR(nn.Module):
 
         #mlp projection head
         dim_mlp = 3*3*32
-        self.encoder.encoder_lin = nn.Sequential([
+        self.encoder.encoder_lin = nn.Sequential(
             nn.Linear(dim_mlp, dim_mlp), 
             nn.ReLU(),
-            self.encoder.encoder_lin
-        ])
+            self.encoder.encoder_lin 
+        )
 
     def forward(self, x):
         return self.encoder(x)

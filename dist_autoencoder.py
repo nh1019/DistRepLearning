@@ -42,7 +42,7 @@ def main(args):
 
     test_accuracies = test_classifier(
         model=encoders,
-        classifiers=classifiers,
+        classifier=classifiers,
         dataset=args.dataset,
         mode=args.testing)
     
