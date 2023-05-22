@@ -9,7 +9,7 @@ from utils.prepare_dataloaders import prepare_CIFAR, prepare_MNIST
 from models.autoencoder import Encoder, Decoder
 from utils.earlystopping import EarlyStopper
 from utils.save_config import save_config
-from utils.plotting import *
+from utils.centralized_plotting import *
 from scripts.centralized_classifier import train_classifier
 from scripts.test_classifier import test_classifier
 
@@ -42,7 +42,7 @@ def main(args):
         dataset=args.dataset,
         mode=args.testing)
     
-    save_accuracies(test_accuracies, args.output)
+    save_accuracy(test_accuracies, args.output)
 
 
 def train_AE(mode: str, dataset: str, batch_size: int, epochs: int, encoded_dim: int, lr: float=1e-4, device: str='cuda:0'):

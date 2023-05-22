@@ -11,7 +11,7 @@ from utils.prepare_dataloaders import prepare_MNIST, prepare_CIFAR
 from utils.aggregate import aggregate, generate_graph
 from utils.earlystopping import EarlyStopper
 from utils.save_config import save_config
-from utils.plotting import plot_losses, plot_accuracies, save_accuracies
+from utils.dist_plotting import plot_losses, plot_accuracies, save_accuracies
 from scripts.test_classifier import test_classifier
 
 def main(args):

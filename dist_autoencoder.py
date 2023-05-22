@@ -9,7 +9,7 @@ from models.autoencoder import Encoder, Decoder
 from utils.prepare_dataloaders import prepare_MNIST, prepare_CIFAR
 from utils.aggregate import aggregate, generate_graph
 from utils.earlystopping import EarlyStopper
-from utils.plotting import save_accuracies, plot_accuracies, plot_losses
+from utils.dist_plotting import save_accuracies, plot_accuracies, plot_losses
 from utils.save_config import save_config
 from scripts.dist_classifier import train_classifier
 from scripts.test_classifier import test_classifier

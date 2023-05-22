@@ -11,7 +11,7 @@ from utils.earlystopping import EarlyStopper
 from utils.aggregate import aggregate, generate_graph
 from utils.prepare_dataloaders import prepare_MNIST, prepare_CIFAR
 from utils.save_config import save_config
-from utils.plotting import *
+from utils.dist_plotting import *
 from scripts.dist_classifier import train_classifier
 from scripts.test_classifier import test_classifier
 

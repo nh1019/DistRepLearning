@@ -9,7 +9,7 @@ from models.contrastive_learning import SimSiam, TwoCropsTransform
 from models.autoencoder import Encoder
 from utils.earlystopping import EarlyStopper
 from utils.prepare_dataloaders import prepare_MNIST, prepare_CIFAR
-from utils.plotting import *
+from utils.centralized_plotting import *
 from utils.save_config import save_config
 from scripts.centralized_classifier import train_classifier
 from scripts.test_classifier import test_classifier
@@ -44,10 +44,10 @@ def main(args):
         dataset=args.dataset,
         mode=args.testing)
     
-    save_accuracies(test_accuracies, args.output)
+    save_accuracy(test_accuracies, args.output)
 
 
-def train_SimSiam(mode: str, dataset: str, epochs: int, batch_size: int, adj_matrix, encoded_dim: int=128, lr: float=1e-3, device: str='cuda:0'):
+def train_SimSiam(mode: str, dataset: str, epochs: int, batch_size: int, encoded_dim: int=128, lr: float=1e-3, device: str='cuda:0'):
     train_transform = transforms.Compose([
         transforms.RandomApply([transforms.ColorJitter(0.4, 0.4, 0.4, 0.1)], p=0.8),
         transforms.RandomGrayscale(p=0.2),
