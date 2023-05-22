@@ -74,7 +74,7 @@ def train_AE(mode: str, dataset: str, batch_size: int, epochs: int, encoded_dim:
         ])
 
     criterion = nn.MSELoss()
-    optimizers = [torch.optim.Adam(params, lr=lr) for params in params_to_optimize]
+    optimizers = [torch.optim.SGD(params, lr=lr) for params in params_to_optimize]
     schedulers = [torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, patience=3) for optimizer in optimizers]
 
     for i in range(n_workers):
