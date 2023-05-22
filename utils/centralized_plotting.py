@@ -16,7 +16,8 @@ def plot_losses(losses: list, title: str, output_dir=None):
         plt.savefig(plot_file)
 
         with open(csv_file, 'w', newline='') as f:
-            f.write(str(loss) for loss in losses)
+            for loss in losses:
+                f.write(str(loss))
     else:
         plt.show()
 
@@ -35,7 +36,8 @@ def plot_accuracies(accuracies: list, title: str, output_dir=None):
         plt.savefig(plot_file)
 
         with open(csv_file, 'w', newline='') as f:
-            f.write(str(acc) for acc in accuracies)
+            for acc in accuracies:
+                f.write(str(acc))
     else:
         plt.show()
 
