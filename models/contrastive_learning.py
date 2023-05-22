@@ -60,6 +60,7 @@ class InfoNCELoss(nn.Module):
         self.sim_fn = sim_fn
 
     def forward(self, features):
+        '''
         labels = torch.cat([torch.arange(self.batch_size) for _ in range(self.n_views)], dim=0)
         labels = (labels.unsqueeze(0)==labels.unsqueeze(1)).long()
         labels = labels.to(self.device)
@@ -88,7 +89,23 @@ class InfoNCELoss(nn.Module):
         logits /= self.temperature
 
         return logits, labels
+        '''
 
+        features = F.normalize(features, dim=1)
+
+        #similarity matrix
+        if self.sim_fn=='dot':
+            sim_matrix = torch.matmul(features, features.T)
+        elif self.sim_fn=='cosine':
+            sim = nn.CosineSimilarity(dim=-1)
+            sim_matrix = sim(features.unsqueeze(1), features.unsqueeze(0))
+
+        exclude_diagonal = torch.eye(self.batch_size, dtype=torch.bool, device=self.device)
+        logits = sim_matrix.masked_fill_(exclude_diagonal, -float('inf'))
+
+        labels = torch.arange(self.batch_size, device=self.device)
+        
+        return logits, labels
 
 
 

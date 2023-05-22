@@ -24,9 +24,9 @@ def train_classifier(model, dataset: str, mode: str, epochs: int, batch_size: in
         trainloader = prepare_CIFAR(mode, batch_size, train_transform)
 
     if simsiam:
-        models = [model.encoder for model in models]
+        encoder = model.encoder
     else:
-        models = model
+        encoder = model
         
     classifier = LinearClassifier(encoded_dim, 10).to(device)
     optimizer = torch.optim.Adam(classifier.parameters(), lr=lr)
@@ -47,7 +47,7 @@ def train_classifier(model, dataset: str, mode: str, epochs: int, batch_size: in
             features, labels = features.to(device), labels.to(device)
 
             optimizer.zero_grad()
-            reps = model(features)
+            reps = encoder(features)
             classifier_output = classifier(reps)
             loss = criterion(classifier_output, labels)
 
