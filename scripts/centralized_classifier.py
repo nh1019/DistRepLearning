@@ -6,7 +6,6 @@ import numpy as np
 
 from utils.earlystopping import EarlyStopper
 from models.linear_classifier import LinearClassifier
-from utils.aggregate import aggregate
 from utils.prepare_dataloaders import prepare_MNIST, prepare_CIFAR
 
 
@@ -74,3 +73,32 @@ def train_classifier(model, dataset: str, mode: str, epochs: int, batch_size: in
             break
 
     return classifier, classifier_losses, classifier_accuracies
+
+def test_classifier(model, classifier, dataset: str, mode: str, device: str='cuda:0', n_workers: int=5, simsiam=False):
+    if simsiam:
+        encoder = model.encoder
+    else:
+        encoder = model
+    
+    classifier.eval()
+
+    if dataset=='MNIST':
+        testloader = prepare_MNIST(mode, batch_size=8, train=False)
+    elif dataset=='CIFAR':
+        testloader = prepare_CIFAR(mode, batch_size=8, train=False)
+
+    total = 0
+    correct = 0
+    testloader = testloader
+    with torch.no_grad():
+        for (features, labels) in testloader:
+            features, labels = features.to(device), labels.to(device)
+            reps = encoder(features)
+            outputs = classifier(reps)
+            _, predicted = torch.max(outputs.data, 1)
+            total += labels.size(0)
+            correct += (predicted==labels).sum().item()
+
+    accuracy = (correct/total)*100
+    
+    return accuracy

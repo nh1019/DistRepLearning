@@ -11,8 +11,7 @@ from utils.earlystopping import EarlyStopper
 from utils.prepare_dataloaders import prepare_MNIST, prepare_CIFAR
 from utils.save_config import save_config
 from utils.centralized_plotting import *
-from scripts.centralized_classifier import train_classifier
-from scripts.test_classifier import test_classifier
+from scripts.centralized_classifier import *
 
 def main(args):
     save_config(args)
@@ -81,7 +80,10 @@ def train_simCLR(mode: str, dataset: str, epochs: int, batch_size: int, encoded_
 
             features = model(images)
             logits, labels = custom_loss(features)
+            print(logits)
+            print(labels)
             loss = criterion(logits, labels)
+            print(loss)
 
             optimizer.zero_grad()
             loss.backward()

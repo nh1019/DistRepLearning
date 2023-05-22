@@ -11,8 +11,7 @@ from utils.earlystopping import EarlyStopper
 from utils.prepare_dataloaders import prepare_MNIST, prepare_CIFAR
 from utils.centralized_plotting import *
 from utils.save_config import save_config
-from scripts.centralized_classifier import train_classifier
-from scripts.test_classifier import test_classifier
+from scripts.centralized_classifier import *
 
 def main(args):
     save_config(args)
