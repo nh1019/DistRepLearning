@@ -61,8 +61,8 @@ def train_AE(mode: str, dataset: str, batch_size: int, epochs: int, encoded_dim:
         trainloaders = prepare_CIFAR(mode, batch_size, train_transform)
 
     worker_losses = {0: [], 1: [], 2: [], 3: [], 4: []}
-    encoders = [Encoder(channels, encoded_dim).to(device) for k in range(n_workers)]
-    decoders = [Decoder(channels, encoded_dim).to(device) for k in range(n_workers)]
+    encoders = [Encoder(channels, encoded_dim).to(device) for _ in range(n_workers)]
+    decoders = [Decoder(channels, encoded_dim).to(device) for _ in range(n_workers)]
     
     es = EarlyStopper(min_delta=0.1)
 

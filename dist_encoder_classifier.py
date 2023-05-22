@@ -51,8 +51,8 @@ def train_EC(mode: str, dataset: str, batch_size: int, epochs: int, encoded_dim:
         channels = 3
         trainloaders = prepare_CIFAR(mode, batch_size, train_transform)
 
-    encoders = [Encoder(channels, encoded_dim).to(device) for k in range(n_workers)]
-    classifiers = [LinearClassifier(encoded_dim, 10).to(device) for k in range(n_workers)]
+    encoders = [Encoder(channels, encoded_dim).to(device) for _ in range(n_workers)]
+    classifiers = [LinearClassifier(encoded_dim, 10).to(device) for _ in range(n_workers)]
     criterion = nn.CrossEntropyLoss()
 
     params_to_optimize = []

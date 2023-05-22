@@ -68,7 +68,7 @@ def train_simCLR(mode: str, dataset: str, epochs: int, batch_size: int, adj_matr
         channels = 3
         trainloaders = prepare_CIFAR(mode, batch_size, TwoCropsTransform(train_transform))
 
-    encoders = [Encoder(channels, encoded_dim).to(device) for k in range(n_workers)]
+    encoders = [Encoder(channels, encoded_dim).to(device) for _ in range(n_workers)]
     models = [SimCLR(encoder, channels).to(device) for encoder in encoders]
     optimizers = [torch.optim.Adam(model.parameters(), lr=lr) for model in models]
     custom_loss = InfoNCELoss(device, batch_size)

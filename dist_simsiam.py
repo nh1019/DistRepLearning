@@ -70,7 +70,7 @@ def train_SimSiam(mode: str, dataset: str, epochs: int, batch_size: int, adj_mat
         channels = 3
         trainloaders = prepare_CIFAR(mode, batch_size, TwoCropsTransform(train_transform))
 
-    encoders = [Encoder(channels, encoded_dim).to(device) for k in range(n_workers)]
+    encoders = [Encoder(channels, encoded_dim).to(device) for _ in range(n_workers)]
     models = [SimSiam(encoder, dim=encoded_dim, pred_dim=encoded_dim//4).to(device) for encoder in encoders]
     optimizers = [torch.optim.Adam(model.parameters(), lr=lr) for model in models]
     criterion = nn.CosineSimilarity(dim=1)

@@ -60,8 +60,8 @@ class InfoNCELoss(nn.Module):
         self.sim_fn = sim_fn
 
     def forward(self, features):
-        labels = torch.cat([torch.arange(self.batch_size) for i in range(self.n_views)], dim=0)
-        labels = (labels.unsqueeze(0)==labels.unsqueeze(1)).float()
+        labels = torch.cat([torch.arange(self.batch_size) for _ in range(self.n_views)], dim=0)
+        labels = (labels.unsqueeze(0)==labels.unsqueeze(1)).long()
         labels = labels.to(self.device)
 
         features = F.normalize(features, dim=1)
@@ -83,7 +83,7 @@ class InfoNCELoss(nn.Module):
         neg = sim_matrix[~labels.bool()].view(sim_matrix.shape[0], -1)
 
         logits = torch.cat([pos, neg], dim=1)
-        labels = torch.zeros(logits.shape[0], dtype=torch.long).to(self.device)
+        labels = torch.cat([torch.ones(pos.shape[0]), torch.zeros(neg.shape[0])], dim=0).long().to(self.device)
 
         logits /= self.temperature
 
