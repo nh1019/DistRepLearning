@@ -10,7 +10,6 @@ def plot_losses(losses: list, title: str, output_dir=None):
     plt.title(title)
     plt.xlabel('Epoch')
     plt.ylabel('Loss')
-    plt.legend()
 
     if output_dir is not None:
         plt.savefig(plot_file)
@@ -30,7 +29,6 @@ def plot_accuracies(accuracies: list, title: str, output_dir=None):
     plt.title(title)
     plt.xlabel('Epoch')
     plt.ylabel('Accuracy')
-    plt.legend()
 
     if output_dir is not None:
         plt.savefig(plot_file)

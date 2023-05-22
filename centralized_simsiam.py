@@ -16,7 +16,7 @@ from scripts.centralized_classifier import *
 def main(args):
     save_config(args)
 
-    encoders, losses = train_SimSiam(
+    encoder, losses = train_SimSiam(
         mode=args.model_training,
         dataset=args.dataset,
         batch_size=256,
@@ -26,7 +26,7 @@ def main(args):
     plot_losses(losses, f'{args.model_training}_SimSiam_Losses', args.output)
     
     classifier, classifier_losses, classifier_accuracies = train_classifier(
-        model=encoders,
+        model=encoder,
         dataset=args.dataset,
         mode=args.classifier_training,
         epochs=args.classifier_epochs,
@@ -38,7 +38,7 @@ def main(args):
     plot_accuracies(classifier_accuracies, f'{args.model_training}_SimSiam_{args.classifier_training}_Classifier_Accuracies', args.output)
 
     test_accuracies = test_classifier(
-        model=encoders,
+        model=encoder,
         classifier=classifier,
         dataset=args.dataset,
         mode=args.testing)
