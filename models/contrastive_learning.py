@@ -101,7 +101,7 @@ class InfoNCELoss(nn.Module):
             sim_matrix = sim(features.unsqueeze(1), features.unsqueeze(0))
 
         exclude_diagonal = torch.eye(2*self.batch_size, dtype=torch.bool, device=self.device)
-        logits = sim_matrix.masked_fill_(exclude_diagonal, -float('inf'))
+        logits = sim_matrix.masked_fill_(exclude_diagonal, 0.)
 
         labels = torch.arange(2*self.batch_size, device=self.device)
         
