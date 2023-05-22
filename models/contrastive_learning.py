@@ -100,10 +100,10 @@ class InfoNCELoss(nn.Module):
             sim = nn.CosineSimilarity(dim=-1)
             sim_matrix = sim(features.unsqueeze(1), features.unsqueeze(0))
 
-        exclude_diagonal = torch.eye(self.batch_size, dtype=torch.bool, device=self.device)
+        exclude_diagonal = torch.eye(2*self.batch_size, dtype=torch.bool, device=self.device)
         logits = sim_matrix.masked_fill_(exclude_diagonal, -float('inf'))
 
-        labels = torch.arange(self.batch_size, device=self.device)
+        labels = torch.arange(2*self.batch_size, device=self.device)
         
         return logits, labels
 
