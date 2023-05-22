@@ -61,7 +61,7 @@ def train_SimSiam(mode: str, dataset: str, epochs: int, batch_size: int, encoded
     
     if dataset=='MNIST':
         channels = 1
-        trainloaders = prepare_MNIST(mode, batch_size, TwoCropsTransform(train_transform))
+        trainloader = prepare_MNIST(mode, batch_size, TwoCropsTransform(train_transform))
     elif dataset=='CIFAR':
         channels = 3
         trainloader = prepare_CIFAR(mode, batch_size, TwoCropsTransform(train_transform))

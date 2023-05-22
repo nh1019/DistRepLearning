@@ -1,5 +1,4 @@
 import os
-import csv
 from matplotlib import pyplot as plt
 
 def plot_losses(losses: list, title: str, output_dir=None):
@@ -17,8 +16,7 @@ def plot_losses(losses: list, title: str, output_dir=None):
         plt.savefig(plot_file)
 
         with open(csv_file, 'w', newline='') as f:
-            writer = csv.writer(f)
-            writer.writerows(zip(*losses))
+            f.write(str(loss) for loss in losses)
     else:
         plt.show()
 
@@ -37,8 +35,7 @@ def plot_accuracies(accuracies: list, title: str, output_dir=None):
         plt.savefig(plot_file)
 
         with open(csv_file, 'w', newline='') as f:
-            writer = csv.writer(f)
-            writer.writerows(zip(*accuracies))
+            f.write(str(acc) for acc in accuracies)
     else:
         plt.show()
 

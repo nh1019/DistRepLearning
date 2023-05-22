@@ -55,7 +55,7 @@ def train_simCLR(mode: str, dataset: str, epochs: int, batch_size: int, encoded_
     ])
 
     es = EarlyStopper(min_delta=0.5)
-    epoch_losses = {0: [], 1: [], 2: [], 3: [], 4: []}
+    epoch_losses = []
     
     if dataset=='MNIST':
         channels = 1
