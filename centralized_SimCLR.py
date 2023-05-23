@@ -80,10 +80,8 @@ def train_simCLR(mode: str, dataset: str, epochs: int, batch_size: int, encoded_
 
             features = model(images)
             logits, labels = custom_loss(features)
-            print(logits)
-            print(labels)
             loss = criterion(logits, labels)
-            print(loss)
+            curr_loss.append(loss.item())
 
             optimizer.zero_grad()
             loss.backward()

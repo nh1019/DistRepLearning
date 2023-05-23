@@ -54,7 +54,6 @@ def train_classifier(model, dataset: str, mode: str, epochs: int, batch_size: in
             curr_loss.append(loss.item())
             loss.backward()
             optimizer.step()
-            #schedulers[k].step()
 
             #check prediction accuracy
             _, predicted = torch.max(classifier_output.data, 1)
@@ -74,7 +73,7 @@ def train_classifier(model, dataset: str, mode: str, epochs: int, batch_size: in
 
     return classifier, classifier_losses, classifier_accuracies
 
-def test_classifier(model, classifier, dataset: str, mode: str, device: str='cuda:0', n_workers: int=5, simsiam=False):
+def test_classifier(model, classifier, dataset: str, mode: str, device: str='cuda:0', simsiam=False):
     if simsiam:
         encoder = model.encoder
     else:
