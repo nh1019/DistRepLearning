@@ -100,7 +100,6 @@ def train_AE(mode: str, dataset: str, batch_size: int, epochs: int, encoded_dim:
                 decoded = decoders[k](encoded)
 
                 loss = criterion(decoded, features)
-                curr_loss.append(loss.item())
                 loss.backward()
                 optimizers[k].step()
                 schedulers[k].step(loss)
