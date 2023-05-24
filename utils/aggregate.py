@@ -21,6 +21,7 @@ def generate_graph(n_workers, topology):
     raise ValueError('Desired topology not implemented.')
 
   A = nx.adjacency_matrix(graph).todense() + np.eye(n_workers)
+  print(A)
   A = torch.tensor(A/np.sum(A, axis=0))
   print(A)
   print(A[0,0])
@@ -39,8 +40,12 @@ def generate_random_graph(n_workers):
 def generate_ring_graph(n_workers):
   graph = nx.Graph()
 
-  graph.add_nodes_from(range(0, n_workers))
-  graph.add_edges_from([(i, (i % n_workers)) for i in range(0, n_workers)])
+  graph.add_nodes_from(range(n_workers))
+
+  for i in range(n_workers):
+    graph.add_edge(i, (i+1)%n_workers)
+    graph.add_edge(i, (i-1)%n_workers)
+    
   return graph
 
 def aggregate(n_workers, models, A):
