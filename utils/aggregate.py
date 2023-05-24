@@ -22,7 +22,7 @@ def generate_graph(n_workers, topology):
 
   A = nx.adjacency_matrix(graph).todense() + np.eye(n_workers)
   print(A)
-  A = torch.tensor(A/np.sum(A, axis=0))
+  A = torch.tensor(A/np.sum(A, axis=1))
   print(A)
   print(A[0,0])
   print(A[0,1])
