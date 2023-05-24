@@ -15,7 +15,7 @@ from scripts.dist_classifier import *
 
 def main(args):
     save_config(args)
-    A = generate_graph(5)
+    A = generate_graph(5, args.topology)
 
     encoders, AE_losses, encoded_dim = train_AE(
         mode=args.model_training,
@@ -126,6 +126,7 @@ if __name__=='__main__':
     parser.add_argument('--testing', type=str, help='choose between local and global (determines the data on which the classifier is tested)', required=True)
     parser.add_argument('--dataset', type=str, help='choose between MNIST and CIFAR (CIFAR-10)', required=True)
     parser.add_argument('--output', type=str, help='specify a folder for output files', required=True)
+    parser.add_argument('--topology', type=str, help='choose a network topology to organise worker nodes', default='random')
 
     args = parser.parse_args()
 
