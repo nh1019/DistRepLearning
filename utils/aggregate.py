@@ -15,12 +15,17 @@ def generate_graph(n_workers, topology):
     graph = generate_ring_graph(n_workers)
   elif topology=='tree':
     graph = nx.random_tree(n=n_workers, seed=0)
+  elif topology=='complete':
+    graph = nx.complete_graph(n_workers)
   else:
     raise ValueError('Desired topology not implemented.')
 
   A = nx.adjacency_matrix(graph).todense() + np.eye(n_workers)
   A = torch.tensor(A/np.sum(A, axis=0))
   print(A)
+  print(A[0,0])
+  print(A[1,3])
+  print(A[4,1])
   return A
 
 def generate_random_graph(n_workers):
