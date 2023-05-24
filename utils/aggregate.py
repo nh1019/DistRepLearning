@@ -5,15 +5,34 @@ import numpy as np
 
 #model aggregation scheme provided by Dr Stefan Vlaski
 
-def generate_graph(n_workers):
-  connected = 0
-  while not connected:
-    graph = nx.barabasi_albert_graph(n_workers, 1)
-    connected = nx.is_connected(graph)
+def generate_graph(n_workers, topology):
+
+  match topology:
+    case 'star':
+      graph = nx.star_graph(n_workers-1)
+    case 'random':
+      graph = generate_random_graph(n_workers)
+    case 'ring':
+      graph = nx.circulant_graph(n_workers, 1)
 
   A = nx.adjacency_matrix(graph).todense() + np.eye(n_workers)
   A = torch.tensor(A/np.sum(A, axis=0))
   return A
+
+def generate_random_graph(n_workers):
+  connected = 0
+  while not connected:
+    graph = nx.erdos_renyi_graph(n_workers, p=.6)
+    connected = nx.is_connected(graph)
+
+  return graph
+
+def generate_ring_graph(n_workers):
+  graph = nx.Graph()
+
+  graph.add_nodes_from(range(0, n_workers))
+  graph.add_edges_from([(i, (i % n_workers)) for i in range(0, n_workers)])
+  return graph
 
 def aggregate(n_workers, models, A):
   weights = [models[k].state_dict() for k in range(n_workers)]
@@ -28,7 +47,7 @@ def aggregate(n_workers, models, A):
     for l in range(n_workers):
       for key in new_weights[k].keys():
         if key[len(key)-4:len(key)]=='bias' or key[len(key)-6:len(key)]=='weight':
-          new_weights[k][key] += 0.25*weights[l][key]
+          new_weights[k][key] += A[l, k]*weights[l][key]
 
   for k in range(n_workers):
     models[k].load_state_dict(new_weights[k])
