@@ -21,8 +21,8 @@ def generate_graph(n_workers, topology):
     raise ValueError('Desired topology not implemented.')
 
   A = nx.adjacency_matrix(graph).todense() + np.eye(n_workers)
-  print(A)
-  A = torch.tensor(A/np.sum(A, axis=1))
+  row_sums = np.sum(A, axis=1)
+  A = torch.tensor(np.divide(A, row_sums[:, np.newaxis]))
   print(A)
   print(A[0,0])
   print(A[0,1])
