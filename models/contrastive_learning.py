@@ -60,7 +60,7 @@ class InfoNCELoss(nn.Module):
         self.sim_fn = sim_fn
 
     def forward(self, features):
-        '''
+        
         labels = torch.cat([torch.arange(self.batch_size) for _ in range(self.n_views)], dim=0)
         labels = (labels.unsqueeze(0)==labels.unsqueeze(1)).long()
         labels = labels.to(self.device)
@@ -106,7 +106,7 @@ class InfoNCELoss(nn.Module):
         labels = torch.arange(2*self.batch_size, device=self.device)
         
         return logits, labels
-
+        '''
 
 
     
