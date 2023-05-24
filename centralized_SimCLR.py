@@ -66,6 +66,7 @@ def train_simCLR(mode: str, dataset: str, epochs: int, batch_size: int, encoded_
     encoder = Encoder(channels, encoded_dim).to(device)
     model = SimCLR(encoder, channels).to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=lr) 
+    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, patience=3)
     custom_loss = InfoNCELoss(device, batch_size)
     criterion = nn.CrossEntropyLoss()
 
@@ -86,6 +87,7 @@ def train_simCLR(mode: str, dataset: str, epochs: int, batch_size: int, encoded_
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
+            scheduler.step(loss)
 
             if batch_idx%len(trainloader)==len(trainloader)-1:
                 avg_train_loss = np.mean(curr_loss)

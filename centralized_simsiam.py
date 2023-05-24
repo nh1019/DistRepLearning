@@ -68,6 +68,7 @@ def train_SimSiam(mode: str, dataset: str, epochs: int, batch_size: int, encoded
     encoder = Encoder(channels, encoded_dim).to(device)
     model = SimSiam(encoder, dim=encoded_dim, pred_dim=encoded_dim//4).to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=lr) 
+    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, patience=3)
     criterion = nn.CosineSimilarity(dim=1)
 
     model.train()
@@ -85,6 +86,7 @@ def train_SimSiam(mode: str, dataset: str, epochs: int, batch_size: int, encoded
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
+            scheduler.step(loss)
 
             if batch_idx%len(trainloader)==len(trainloader)-1:
                 avg_train_loss = np.mean(curr_loss)
