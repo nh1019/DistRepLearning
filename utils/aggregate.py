@@ -25,8 +25,10 @@ def generate_graph(n_workers, topology):
   A = torch.tensor(A/np.sum(A, axis=0))
   print(A)
   print(A[0,0])
-  print(A[1,3])
-  print(A[4,1])
+  print(A[0,1])
+  print(A[0,2])
+  print(A[0,3])
+  print(A[0,4])
   return A
 
 def generate_random_graph(n_workers):
@@ -45,7 +47,7 @@ def generate_ring_graph(n_workers):
   for i in range(n_workers):
     graph.add_edge(i, (i+1)%n_workers)
     graph.add_edge(i, (i-1)%n_workers)
-    
+
   return graph
 
 def aggregate(n_workers, models, A):
