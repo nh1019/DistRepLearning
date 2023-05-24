@@ -41,7 +41,8 @@ def main(args):
         model=encoder,
         classifier=classifier,
         dataset=args.dataset,
-        mode=args.testing)
+        mode=args.testing,
+        simsiam=True)
     
     save_accuracy(test_accuracies, args.output)
 
