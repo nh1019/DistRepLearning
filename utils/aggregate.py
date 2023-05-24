@@ -7,17 +7,16 @@ import numpy as np
 
 def generate_graph(n_workers, topology):
 
-  match topology:
-    case 'star':
-      graph = nx.star_graph(n_workers-1)
-    case 'random':
-      graph = generate_random_graph(n_workers)
-    case 'ring':
-      graph = generate_ring_graph(n_workers)
-    case 'tree':
-      graph = nx.random_tree(n=5, seed=0)
-    case _:
-      raise ValueError('Desired topology not implemented.')
+  if topology=='star':
+    graph = nx.star_graph(n_workers-1)
+  elif topology=='random':
+    graph = generate_random_graph(n_workers)
+  elif topology=='ring':
+    graph = generate_ring_graph(n_workers)
+  elif topology=='tree':
+    graph = nx.random_tree(n=n_workers, seed=0)
+  else:
+    raise ValueError('Desired topology not implemented.')
 
   A = nx.adjacency_matrix(graph).todense() + np.eye(n_workers)
   A = torch.tensor(A/np.sum(A, axis=0))
