@@ -13,7 +13,11 @@ def generate_graph(n_workers, topology):
     case 'random':
       graph = generate_random_graph(n_workers)
     case 'ring':
-      graph = nx.circulant_graph(n_workers, 1)
+      graph = generate_ring_graph(n_workers)
+    case 'tree':
+      graph = nx.random_tree(n=5, seed=0)
+    case _:
+      raise ValueError('Desired topology not implemented.')
 
   A = nx.adjacency_matrix(graph).todense() + np.eye(n_workers)
   A = torch.tensor(A/np.sum(A, axis=0))
