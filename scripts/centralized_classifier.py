@@ -79,6 +79,7 @@ def test_classifier(model, classifier, dataset: str, mode: str, device: str='cud
     else:
         encoder = model
     
+    encoder.eval()
     classifier.eval()
 
     if dataset=='MNIST':

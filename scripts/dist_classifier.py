@@ -3,6 +3,7 @@ import torch.nn as nn
 from torchvision import transforms
 from tqdm import tqdm
 import numpy as np
+from PIL import Image
 
 from utils.earlystopping import EarlyStopper
 from models.linear_classifier import LinearClassifier
@@ -89,13 +90,23 @@ def test_classifier(model, classifier, dataset: str, mode: str, device: str='cud
     else:
         encoders = model
     
-    for classifier in classifiers:
-        classifier.eval()
+    for i in range(n_workers):
+        encoders[i].eval()
+        classifiers[i].eval()
 
     if dataset=='MNIST':
         testloaders = prepare_MNIST(mode, batch_size=8, train=False)
     elif dataset=='CIFAR':
-        testloaders = prepare_CIFAR(mode, batch_size=8, train=False)
+        test_datasets, testloaders = prepare_CIFAR(mode, batch_size=8, train=False)
+
+    #save examples
+    for j in range(n_workers):
+        img = test_datasets[j][0][0].unsqueeze(0)
+        encoded_img = encoders[j](img).cpu().numpy()
+        normalized = (encoded_img*256).astype('uint8')
+        pil_img = Image.fromarray(normalized)
+        pil_img.save(f'example_{j}.png')
+
 
     worker_accuracies = {0: [], 1: [], 2: [], 3: [], 4: []}
 

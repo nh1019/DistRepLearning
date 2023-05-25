@@ -23,12 +23,6 @@ def generate_graph(n_workers, topology):
   A = nx.adjacency_matrix(graph).todense() + np.eye(n_workers)
   row_sums = np.sum(A, axis=1)
   A = torch.tensor(np.divide(A, row_sums[:, np.newaxis]))
-  print(A)
-  print(A[0,0])
-  print(A[0,1])
-  print(A[0,2])
-  print(A[0,3])
-  print(A[0,4])
   return A
 
 def generate_random_graph(n_workers):

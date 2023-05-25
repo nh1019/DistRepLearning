@@ -50,4 +50,3 @@ def save_accuracies(accuracies, output):
     with open(os.path.join(output, 'test_accuracies'), 'w') as f:
         for key in accuracies.keys():
             f.write('{},{:.2f}\n'.format(key, accuracies[key]))
-
