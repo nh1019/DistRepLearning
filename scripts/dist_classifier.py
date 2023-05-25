@@ -4,6 +4,7 @@ from torchvision import transforms
 from tqdm import tqdm
 import numpy as np
 from PIL import Image
+from sklearn.metrics import confusion_matrix
 
 from utils.earlystopping import EarlyStopper
 from models.linear_classifier import LinearClassifier
@@ -109,11 +110,16 @@ def test_classifier(model, classifier, dataset: str, mode: str, device: str='cud
 
     worker_accuracies = {0: [], 1: [], 2: [], 3: [], 4: []}
 
+    num_classes = 10
+    confusion_matrices = []
+
     for k in range(n_workers):
         total = 0
         correct = 0
         testloader = testloaders[k] if mode=='local' else testloaders
         with torch.no_grad():
+            true_labels = []
+            predicted_labels = []
             for (features, labels) in testloader:
                 features, labels = features.to(device), labels.to(device)
                 reps = encoders[k](features)
@@ -121,7 +127,13 @@ def test_classifier(model, classifier, dataset: str, mode: str, device: str='cud
                 _, predicted = torch.max(outputs.data, 1)
                 total += labels.size(0)
                 correct += (predicted==labels).sum().item()
+
+                true_labels.extend(labels.cpu().numpy())
+                predicted_labels.extend(predicted.cpu().numpy())
+
+            cm = confusion_matrix(true_labels, predicted_labels, labels=range(num_classes))
+            confusion_matrices.append(cm)
     
         worker_accuracies[k] = (correct/total)*100
-    
-    return worker_accuracies
+
+    return worker_accuracies, confusion_matrices

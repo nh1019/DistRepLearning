@@ -9,7 +9,7 @@ from models.autoencoder import Encoder, Decoder
 from utils.prepare_dataloaders import prepare_MNIST, prepare_CIFAR
 from utils.aggregate import aggregate, generate_graph
 from utils.earlystopping import EarlyStopper
-from utils.dist_plotting import save_accuracies, plot_accuracies, plot_losses
+from utils.dist_plotting import *
 from utils.save_config import save_config
 from scripts.dist_classifier import *
 
@@ -39,11 +39,14 @@ def main(args):
     plot_losses(classifier_losses, f'Autoencoder_{args.classifier_training}_Classifier_Losses', args.output)
     plot_accuracies(classifier_accuracies, f'Autoencoder_{args.classifier_training}_Classifier_Accuracies', args.output)
 
-    test_accuracies = test_classifier(
+    test_accuracies, confusion_matrices = test_classifier(
         model=encoders,
         classifier=classifiers,
         dataset=args.dataset,
         mode=args.testing)
+    
+    for i, cm in enumerate(confusion_matrices):
+        plot_confusion_matrix(cm, args.output, i)
     
     save_accuracies(test_accuracies, args.output)
 
