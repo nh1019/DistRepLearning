@@ -33,6 +33,7 @@ def train_classifier(model, dataset: str, mode: str, epochs: int, batch_size: in
     #schedulers = [torch.optim.lr_scheduler.StepLR(optimizer, step_size=20, gamma=0.9) for optimizer in optimizers]
     criterion = nn.CrossEntropyLoss()
 
+    encoder.eval()
     classifier.train()
 
     classifier_accuracies = []

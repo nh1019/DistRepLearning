@@ -36,8 +36,9 @@ def train_classifier(model, dataset: str, mode: str, epochs: int, batch_size: in
     #schedulers = [torch.optim.lr_scheduler.StepLR(optimizer, step_size=20, gamma=0.9) for optimizer in optimizers]
     criterion = nn.CrossEntropyLoss()
 
-    for classifier in classifiers:
-        classifier.train()
+    for i in range(n_workers):
+        models[i].eval()
+        classifiers[i].train()
 
     classifier_accuracies = {0: [], 1: [], 2: [], 3: [], 4: []}
     classifier_losses = {0: [], 1: [], 2: [], 3: [], 4: []}
