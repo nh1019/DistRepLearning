@@ -33,7 +33,7 @@ def train_classifier(model, dataset: str, mode: str, epochs: int, batch_size: in
         
     classifiers = [LinearClassifier(encoded_dim, 10).to(device) for k in range(n_workers)]
     optimizers = [torch.optim.Adam(classifier.parameters(), lr=lr) for classifier in classifiers]
-    #schedulers = [torch.optim.lr_scheduler.StepLR(optimizer, step_size=20, gamma=0.9) for optimizer in optimizers]
+    schedulers = [torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, patience=3) for optimizer in optimizers]
     criterion = nn.CrossEntropyLoss()
 
     for i in range(n_workers):
@@ -60,7 +60,7 @@ def train_classifier(model, dataset: str, mode: str, epochs: int, batch_size: in
                 curr_loss.append(loss.item())
                 loss.backward()
                 optimizers[k].step()
-                #schedulers[k].step()
+                schedulers[k].step(loss)
 
                 #check prediction accuracy
                 _, predicted = torch.max(classifier_output.data, 1)
