@@ -104,7 +104,7 @@ def test_classifier(model, classifier, dataset: str, mode: str, device: str='cud
         for j in range(n_workers):
             img = test_datasets[j][0][0].to(device)
             img = img.unsqueeze(0)
-            encoded_img = encoders[j](img).cpu().numpy()
+            encoded_img = encoders[j](img).cpu().detach().numpy()
             normalized = (encoded_img*256).astype('uint8')
             pil_img = Image.fromarray(normalized)
             pil_img.save(f'example_{j}.png')
