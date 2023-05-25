@@ -76,14 +76,12 @@ def prepare_CIFAR(mode: str, batch_size: int, train_transform=None, train=True):
                 targets_tensor = torch.tensor(test_dataset.targets)
                 idx = torch.cat([torch.where(targets_tensor==c)[0] for c in classes])
                 test_datasets.append(Subset(test_dataset, idx))
-                #return dataset to show image examples
-                return test_datasets
             
             testloaders = []
             for test_dataset in test_datasets:
                 testloaders.append(DataLoader(test_dataset, batch_size, drop_last=True))
 
-            return testloaders
+            return testloaders, test_datasets
 
         else:
             return DataLoader(test_dataset, batch_size, drop_last=True)

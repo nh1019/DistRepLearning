@@ -99,7 +99,7 @@ def test_classifier(model, classifier, dataset: str, mode: str, device: str='cud
     if dataset=='MNIST':
         testloaders = prepare_MNIST(mode, batch_size=8, train=False)
     elif dataset=='CIFAR':
-        test_datasets, testloaders = prepare_CIFAR(mode, batch_size=8, train=False)
+        testloaders, test_datasets = prepare_CIFAR(mode, batch_size=8, train=False)
         #save examples
         for j in range(n_workers):
             img = test_datasets[j][0][0].unsqueeze(0)
