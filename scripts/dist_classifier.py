@@ -98,14 +98,13 @@ def test_classifier(model, classifier, dataset: str, mode: str, device: str='cud
         testloaders = prepare_MNIST(mode, batch_size=8, train=False)
     elif dataset=='CIFAR':
         test_datasets, testloaders = prepare_CIFAR(mode, batch_size=8, train=False)
-
-    #save examples
-    for j in range(n_workers):
-        img = test_datasets[j][0][0].unsqueeze(0)
-        encoded_img = encoders[j](img).cpu().numpy()
-        normalized = (encoded_img*256).astype('uint8')
-        pil_img = Image.fromarray(normalized)
-        pil_img.save(f'example_{j}.png')
+        #save examples
+        for j in range(n_workers):
+            img = test_datasets[j][0][0].unsqueeze(0)
+            encoded_img = encoders[j](img).cpu().numpy()
+            normalized = (encoded_img*256).astype('uint8')
+            pil_img = Image.fromarray(normalized)
+            pil_img.save(f'example_{j}.png')
 
 
     worker_accuracies = {0: [], 1: [], 2: [], 3: [], 4: []}
