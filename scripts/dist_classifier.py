@@ -102,7 +102,8 @@ def test_classifier(model, classifier, dataset: str, mode: str, device: str='cud
         testloaders, test_datasets = prepare_CIFAR(mode, batch_size=8, train=False)
         #save examples
         for j in range(n_workers):
-            img = test_datasets[j][0][0].unsqueeze(0)
+            img = test_datasets[j][0][0].to(device)
+            img = img.unsqueeze(0)
             encoded_img = encoders[j](img).cpu().numpy()
             normalized = (encoded_img*256).astype('uint8')
             pil_img = Image.fromarray(normalized)
