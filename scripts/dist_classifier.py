@@ -107,7 +107,7 @@ def test_classifier(model, classifier, dataset: str, mode: str, device: str='cud
             encoded_img = encoders[j](img).cpu().detach().numpy()
             normalized = (encoded_img*256).astype('uint8')
             pil_img = Image.fromarray(normalized)
-            pil_img.save(f'example_{j}.png')
+            pil_img.save(f'./results/example_{j}.png')
 
 
     worker_accuracies = {0: [], 1: [], 2: [], 3: [], 4: []}

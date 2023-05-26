@@ -61,6 +61,7 @@ def plot_confusion_matrix(cm, output_dir, worker):
     ax.xaxis.set_ticklabels(class_labels)
     ax.yaxis.set_ticklabels(class_labels)
     plt.xticks(rotation=45)
+    plt.yticks(rotation=45)
 
     plt.savefig(filename)
 
