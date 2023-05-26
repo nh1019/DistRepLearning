@@ -31,9 +31,7 @@ def train_classifier(model, dataset: str, mode: str, epochs: int, batch_size: in
     else:
         models = model
         
-    classifiers = [LinearClassifier(encoded_dim, 10).to(device) for k in range(n_workers)]
-    optimizers = [torch.optim.Adam(classifier.parameters(), lr=lr) for classifier in classifiers]
-    schedulers = [torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, patience=3) for optimizer in optimizers]
+    classifiers = [LinearClassifier(encoded_dim, 10).to(device) for _ in range(n_workers)]
     criterion = nn.CrossEntropyLoss()
 
     for i in range(n_workers):
@@ -42,6 +40,31 @@ def train_classifier(model, dataset: str, mode: str, epochs: int, batch_size: in
 
     classifier_accuracies = {0: [], 1: [], 2: [], 3: [], 4: []}
     classifier_losses = {0: [], 1: [], 2: [], 3: [], 4: []}
+
+    warmup_epochs = 5
+    initial_lr = 1e-5
+    desired_lr = 1e-3
+
+    optimizers = [torch.optim.SGD(classifier.parameters(), lr=initial_lr) for classifier in classifiers]
+    schedulers = [torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, patience=3) for optimizer in optimizers]
+
+    for epoch in range(warmup_epochs):
+        current_lr = initial_lr + (desired_lr-initial_lr)*(epoch/warmup_epochs)
+        for k in range(n_workers):
+            trainloader = trainloaders[k]
+            for param_group in optimizers[k].param_groups:
+                param_group['lr'] = current_lr
+            for batch_idx, (features, _) in tqdm(enumerate(trainloader)):
+                features = features.to(device)
+
+                optimizers[k].zero_grad()
+                encoded = models[k](features)
+                decoded = classifiers[k](encoded)
+
+                loss = criterion(decoded, features)
+                loss.backward()
+                optimizers[k].step()
+                schedulers[k].step(loss)
 
     for epoch in range(epochs):
         for k in range(n_workers):
