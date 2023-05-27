@@ -1,4 +1,5 @@
 import torch.nn as nn
+import torch.nn.functional as F
 
 class LinearClassifier(nn.Module):
   def __init__(self, input_dims, output_dims):
@@ -6,4 +7,4 @@ class LinearClassifier(nn.Module):
     self.linear = nn.Linear(input_dims, output_dims)
 
   def forward(self, x):
-    return self.linear(x)
+    return F.softmax(self.linear(x))

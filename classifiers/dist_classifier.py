@@ -130,7 +130,6 @@ def test_classifier(model, classifier, dataset: str, mode: str, device: str='cud
             normalized = (encoded_img*256).astype('uint8')
             pil_img = Image.fromarray(normalized)
             pil_img.save(f'./results/example_{j}.png')
-            print('got here')
 
 
     worker_accuracies = {0: [], 1: [], 2: [], 3: [], 4: []}
