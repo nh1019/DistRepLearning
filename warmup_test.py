@@ -11,7 +11,7 @@ from utils.aggregate import aggregate, generate_graph
 from utils.earlystopping import EarlyStopper
 from utils.dist_plotting import *
 from utils.save_config import save_config
-from scripts.dist_classifier import *
+from classifiers.dist_classifier import *
 
 def main(args):
     save_config(args)

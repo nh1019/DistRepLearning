@@ -11,7 +11,7 @@ from utils.prepare_dataloaders import prepare_MNIST, prepare_CIFAR
 from utils.earlystopping import EarlyStopper
 from utils.save_config import save_config
 from utils.centralized_plotting import *
-from scripts.centralized_classifier import *
+from classifiers.centralized_classifier import *
 
 def main(args):
     save_config(args)
