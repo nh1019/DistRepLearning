@@ -64,7 +64,6 @@ def train_classifier(model, dataset: str, mode: str, epochs: int, batch_size: in
                 loss = criterion(classifier_output, labels)
                 loss.backward()
                 optimizers[k].step()
-                schedulers[k].step(loss)
 
     for epoch in range(epochs):
         for k in range(n_workers):
