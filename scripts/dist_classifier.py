@@ -19,7 +19,7 @@ def train_classifier(model, dataset: str, mode: str, epochs: int, batch_size: in
             transforms.Normalize((.5,), (.5,))
         ])
 
-    es = EarlyStopper(min_delta=0.2)
+    es = EarlyStopper(min_delta=0.5)
 
     if dataset=='MNIST':
         trainloaders = prepare_MNIST(mode, batch_size, train_transform)
@@ -54,14 +54,14 @@ def train_classifier(model, dataset: str, mode: str, epochs: int, batch_size: in
             trainloader = trainloaders[k]
             for param_group in optimizers[k].param_groups:
                 param_group['lr'] = current_lr
-            for batch_idx, (features, _) in tqdm(enumerate(trainloader)):
-                features = features.to(device)
+            for batch_idx, (features, labels) in tqdm(enumerate(trainloader)):
+                features, labels = features.to(device), labels.to(device)
 
                 optimizers[k].zero_grad()
                 encoded = models[k](features)
-                decoded = classifiers[k](encoded)
+                classifier_output = classifiers[k](encoded)
 
-                loss = criterion(decoded, features)
+                loss = criterion(classifier_output, labels)
                 loss.backward()
                 optimizers[k].step()
                 schedulers[k].step(loss)
@@ -131,6 +131,7 @@ def test_classifier(model, classifier, dataset: str, mode: str, device: str='cud
             normalized = (encoded_img*256).astype('uint8')
             pil_img = Image.fromarray(normalized)
             pil_img.save(f'./results/example_{j}.png')
+            print('got here')
 
 
     worker_accuracies = {0: [], 1: [], 2: [], 3: [], 4: []}
