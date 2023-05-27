@@ -73,6 +73,7 @@ def train_classifier(model, dataset: str, mode: str, epochs: int, batch_size: in
             trainloader = trainloaders[k]
             for batch_idx, (features, labels) in tqdm(enumerate(trainloader)):
                 features, labels = features.to(device), labels.to(device)
+                print(labels)
 
                 optimizers[k].zero_grad()
                 reps = models[k](features)
@@ -86,6 +87,7 @@ def train_classifier(model, dataset: str, mode: str, epochs: int, batch_size: in
 
                 #check prediction accuracy
                 _, predicted = torch.max(classifier_output.data, 1)
+                print(predicted)
                 total += labels.size(0)
                 correct += (predicted==labels).sum().item()
 
