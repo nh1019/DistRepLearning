@@ -1,6 +1,11 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+import torchvision.models as models
+
+'''
+SimCLR code adapted from github.com/sthalles/SimCLR
+'''
 
 class TwoCropsTransform:
     def __init__(self, transform):
@@ -35,14 +40,14 @@ class SimCLR(nn.Module):
     def __init__(self, encoder, channels, out_dim=32):
         super(SimCLR, self).__init__()
 
-        self.encoder = encoder
+        self.encoder = models.resnet34(pretrained=False, num_classes=10)
 
         #mlp projection head
-        self.dim_mlp = 7*7*32 if channels==1 else 8*8*32
+        self.dim_mlp = self.encoder.fc.in_features
         self.encoder.encoder_lin = nn.Sequential(
             nn.Linear(self.dim_mlp, self.dim_mlp), 
             nn.ReLU(),
-            self.encoder.encoder_lin 
+            self.encoder.fc
         )
 
     def forward(self, x):
@@ -89,24 +94,6 @@ class InfoNCELoss(nn.Module):
         logits /= self.temperature
 
         return logits, labels
-        '''
-
-        features = F.normalize(features, dim=1)
-
-        #similarity matrix
-        if self.sim_fn=='dot':
-            sim_matrix = torch.matmul(features, features.T)
-        elif self.sim_fn=='cosine':
-            sim = nn.CosineSimilarity(dim=-1)
-            sim_matrix = sim(features.unsqueeze(1), features.unsqueeze(0))
-
-        exclude_diagonal = torch.eye(2*self.batch_size, dtype=torch.bool, device=self.device)
-        logits = sim_matrix.masked_fill_(exclude_diagonal, 0.)
-
-        labels = torch.arange(2*self.batch_size, device=self.device)
-        
-        return logits, labels
-        '''
 
 
     
