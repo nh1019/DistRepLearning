@@ -58,7 +58,11 @@ def aggregate(n_workers, models, A):
     for l in range(n_workers):
       for key in new_weights[k].keys():
         if key[len(key)-4:len(key)]=='bias' or key[len(key)-6:len(key)]=='weight':
+          print(key)
+          print('k: ' + str(k))
+          print('l: ' + str(l)) 
           new_weights[k][key] += A[l, k]*weights[l][key]
+          print(A[l,k])
 
   for k in range(n_workers):
     models[k].load_state_dict(new_weights[k])

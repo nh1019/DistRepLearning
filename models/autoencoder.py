@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 
 class Encoder(nn.Module):
-    def __init__(self, channels: int, encoded_space_dim: int, output_size: int=32):
+    def __init__(self, channels: int, encoded_space_dim: int):
         super().__init__()
         
         ### Convolutional section
@@ -37,7 +37,7 @@ class Encoder(nn.Module):
 
 
 class Decoder(nn.Module):
-    def __init__(self, channels: int, encoded_space_dim: int, input_size: int=32):
+    def __init__(self, channels: int, encoded_space_dim: int):
         super().__init__()
 
         if channels==1:
