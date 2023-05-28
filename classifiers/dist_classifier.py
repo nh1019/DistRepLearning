@@ -103,11 +103,12 @@ def test_classifier(model, classifier, dataset: str, mode: str, device: str='cud
         testloaders, test_datasets = prepare_CIFAR(mode, batch_size=8, train=False)
         #save examples
         for j in range(n_workers):
-            img = test_datasets[j][0][0].to(device)
-            img = img.unsqueeze(0)
-            encoded_img = encoders[j](img).cpu().detach().numpy()
-            pil_img = Image.fromarray(encoded_img)
-            pil_img.save(f'./results/example_{j}.png')
+            img = test_datasets[j][0][0].cpu().unsqueeze(0)
+            encoded_img = encoders[j](img).detach()
+            pil_img = Image.fromarray(img.numpy().convert('RGB'))
+            pil_img.save(f'./results/original_{j}.png')
+            encoded_pil_img = Image.fromarray(encoded_img.numpy().convert('RGB'))
+            encoded_pil_img.save(f'./results/encoded_{j}.png')
 
 
     worker_accuracies = {0: [], 1: [], 2: [], 3: [], 4: []}
