@@ -21,8 +21,7 @@ def generate_graph(n_workers, topology):
     raise ValueError('Desired topology not implemented.')
 
   A = nx.adjacency_matrix(graph).todense() + np.eye(n_workers)
-  row_sums = np.sum(A, axis=1)
-  A = torch.tensor(np.divide(A, row_sums[:, np.newaxis]))
+  A = torch.tensor(A / np.sum(A, axis=0))
   print(A)
   return A
 
@@ -57,12 +56,8 @@ def aggregate(n_workers, models, A):
   for k in range(n_workers):
     for l in range(n_workers):
       for key in new_weights[k].keys():
-        if key[len(key)-4:len(key)]=='bias' or key[len(key)-6:len(key)]=='weight':
-          print(key)
-          print('k: ' + str(k))
-          print('l: ' + str(l)) 
+        if key[len(key)-4:len(key)]=='bias' or key[len(key)-6:len(key)]=='weight': 
           new_weights[k][key] += A[l, k]*weights[l][key]
-          print(A[l,k])
 
   for k in range(n_workers):
     models[k].load_state_dict(new_weights[k])
