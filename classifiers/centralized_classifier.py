@@ -43,7 +43,6 @@ def train_classifier(model, dataset: str, mode: str, epochs: int, batch_size: in
         total = 0
         correct = 0
         curr_loss = []
-        trainloader = trainloader
         for batch_idx, (features, labels) in tqdm(enumerate(trainloader)):
             features, labels = features.to(device), labels.to(device)
 

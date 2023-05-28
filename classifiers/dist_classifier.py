@@ -42,7 +42,7 @@ def train_classifier(model, dataset: str, mode: str, epochs: int, batch_size: in
     classifier_losses = {0: [], 1: [], 2: [], 3: [], 4: []}
 
     optimizers = [torch.optim.SGD(classifier.parameters(), lr=lr) for classifier in classifiers]
-    schedulers = [torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, patience=3) for optimizer in optimizers]
+    #schedulers = [torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, patience=3) for optimizer in optimizers]
 
     for epoch in range(epochs):
         for k in range(n_workers):
@@ -56,13 +56,12 @@ def train_classifier(model, dataset: str, mode: str, epochs: int, batch_size: in
                 optimizers[k].zero_grad()
                 reps = models[k](features)
                 classifier_output = classifiers[k](reps)
-                print(classifier_output)
                 loss = criterion(classifier_output, labels)
 
                 curr_loss.append(loss.item())
                 loss.backward()
                 optimizers[k].step()
-                schedulers[k].step(loss)
+                #schedulers[k].step(loss)
 
                 #check prediction accuracy
                 _, predicted = torch.max(classifier_output.data, 1)
@@ -111,8 +110,7 @@ def test_classifier(model, classifier, dataset: str, mode: str, device: str='cud
             img = test_datasets[j][0][0].to(device)
             img = img.unsqueeze(0)
             encoded_img = encoders[j](img).cpu().detach().numpy()
-            normalized = (encoded_img*256).astype('uint8')
-            pil_img = Image.fromarray(normalized)
+            pil_img = Image.fromarray(encoded_img)
             pil_img.save(f'./results/example_{j}.png')
 
 

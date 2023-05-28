@@ -37,13 +37,14 @@ class SimSiam(nn.Module):
         return p1, p2, z1.detach(), z2.detach()
     
 class SimCLR(nn.Module):
-    def __init__(self, encoder, channels, out_dim=32):
+    def __init__(self):
         super(SimCLR, self).__init__()
 
-        self.encoder = models.resnet34(pretrained=False, num_classes=10)
+        self.encoder = models.resnet34(weights=None, num_classes=10)
 
         #mlp projection head
         self.dim_mlp = self.encoder.fc.in_features
+        print(self.dim_mlp)
         self.encoder.encoder_lin = nn.Sequential(
             nn.Linear(self.dim_mlp, self.dim_mlp), 
             nn.ReLU(),

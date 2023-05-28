@@ -57,14 +57,13 @@ def train_simCLR(mode: str, dataset: str, epochs: int, batch_size: int, encoded_
     epoch_losses = []
     
     if dataset=='MNIST':
-        channels = 1
         trainloader = prepare_MNIST(mode, batch_size, TwoCropsTransform(train_transform))
     elif dataset=='CIFAR':
         channels = 3
         trainloader = prepare_CIFAR(mode, batch_size, TwoCropsTransform(train_transform))
 
     encoder = Encoder(channels, encoded_dim).to(device)
-    model = SimCLR(encoder, channels).to(device)
+    model = SimCLR().to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=lr) 
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, patience=3)
     custom_loss = InfoNCELoss(device, batch_size)
