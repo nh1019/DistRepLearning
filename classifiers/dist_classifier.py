@@ -69,10 +69,6 @@ def train_classifier(model, dataset: str, mode: str, epochs: int, batch_size: in
                 correct += (predicted==labels).sum().item()
 
                 if batch_idx%len(trainloader)==len(trainloader)-1:
-                    print('true labels:')
-                    print(labels)
-                    print('predicted:')
-                    print(predicted)
                     avg_train_loss = np.mean(curr_loss)
                     avg_train_acc = (correct/total)*100
                     print(f'In epoch {epoch} for worker {k}, average training loss is {avg_train_loss}, average training accuracy is {avg_train_acc}%.')
