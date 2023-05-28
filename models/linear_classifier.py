@@ -7,4 +7,4 @@ class LinearClassifier(nn.Module):
     self.linear = nn.Linear(input_dims, output_dims)
 
   def forward(self, x):
-    return F.softmax(self.linear(x))
+    return F.log_softmax(self.linear(x), dim=1)
