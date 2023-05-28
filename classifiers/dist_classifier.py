@@ -41,7 +41,7 @@ def train_classifier(model, dataset: str, mode: str, epochs: int, batch_size: in
     classifier_accuracies = {0: [], 1: [], 2: [], 3: [], 4: []}
     classifier_losses = {0: [], 1: [], 2: [], 3: [], 4: []}
 
-    optimizers = [torch.optim.SGD(classifier.parameters(), lr=lr) for classifier in classifiers]
+    optimizers = [torch.optim.Adam(classifier.parameters(), lr=lr) for classifier in classifiers]
     schedulers = [torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, patience=3) for optimizer in optimizers]
 
     for epoch in range(epochs):
