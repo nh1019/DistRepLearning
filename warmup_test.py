@@ -15,6 +15,7 @@ from classifiers.dist_classifier import *
 
 def main(args):
     save_config(args)
+    torch.manual_seed(2)
     A = generate_graph(5, args.topology)
 
     encoders, AE_losses, encoded_dim = train_AE(
