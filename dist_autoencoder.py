@@ -48,7 +48,7 @@ def main(args):
         mode=args.testing)
     
     for i, cm in enumerate(confusion_matrices):
-        plot_confusion_matrix(cm, args.output, i)
+        plot_confusion_matrix(cm, args.dataset, args.output, i)
     
     save_accuracies(test_accuracies, args.output)
 

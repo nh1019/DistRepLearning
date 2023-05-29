@@ -47,10 +47,13 @@ def plot_accuracies(accuracies: dict, title: str, output_dir=None):
     else:
         plt.show()
 
-def plot_confusion_matrix(cm, output_dir, worker):
+def plot_confusion_matrix(cm, dataset, output_dir, worker):
     filename = output_dir + '/confusion_matrix_' + str(worker) + '.png'
 
-    class_labels = ['Airplane', 'Automobile', 'Bird', 'Cat', 'Deer', 'Dog', 'Frog', 'Horse', 'Ship', 'Truck']
+    if dataset=='CIFAR':
+        class_labels = ['Airplane', 'Automobile', 'Bird', 'Cat', 'Deer', 'Dog', 'Frog', 'Horse', 'Ship', 'Truck']
+    else:
+        class_labels = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
 
     fig, ax = plt.subplots()
     heatmap = sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', cbar=False)
