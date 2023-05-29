@@ -90,7 +90,7 @@ class InfoNCELoss(nn.Module):
         neg = sim_matrix[~labels.bool()].view(sim_matrix.shape[0], -1)
 
         logits = torch.cat([pos, neg], dim=1)
-        labels = torch.cat([torch.ones(pos.shape[0]//2), torch.zeros(neg.shape[0]//2)], dim=0).long().to(self.device)
+        labels = torch.zeros(logits.shape[0], ftype=torch.long).to(self.device)
 
         logits /= self.temperature
 
