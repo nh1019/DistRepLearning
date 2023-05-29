@@ -4,7 +4,7 @@ import torchvision.transforms as transforms
 from matplotlib import pyplot as plt
 import seaborn as sns
 from sklearn.manifold import TSNE
-from prepare_dataloaders import *
+from utils.prepare_dataloaders import *
 
 def plot_losses(losses: dict, title: str, output_dir=None):
     plt.clf()
