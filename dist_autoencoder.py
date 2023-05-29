@@ -9,12 +9,14 @@ from models.autoencoder import Encoder, Decoder
 from utils.prepare_dataloaders import prepare_MNIST, prepare_CIFAR
 from utils.aggregate import aggregate, generate_graph
 from utils.earlystopping import EarlyStopper
-from utils.dist_plotting import save_accuracies, plot_accuracies, plot_losses
+from utils.dist_plotting import *
 from utils.save_config import save_config
 from classifiers.dist_classifier import *
 
 def main(args):
     save_config(args)
+    torch.manual_seed(2)
+    np.random.seed(2)
     A = generate_graph(5, args.topology)
 
     encoders, AE_losses, encoded_dim = train_AE(
@@ -39,15 +41,18 @@ def main(args):
     plot_losses(classifier_losses, f'Autoencoder_{args.classifier_training}_Classifier_Losses', args.output)
     plot_accuracies(classifier_accuracies, f'Autoencoder_{args.classifier_training}_Classifier_Accuracies', args.output)
 
-    test_accuracies = test_classifier(
+    test_accuracies, confusion_matrices = test_classifier(
         model=encoders,
         classifier=classifiers,
         dataset=args.dataset,
         mode=args.testing)
     
+    for i, cm in enumerate(confusion_matrices):
+        plot_confusion_matrix(cm, args.output, i)
+    
     save_accuracies(test_accuracies, args.output)
 
-def train_AE(mode: str, dataset: str, batch_size: int, epochs: int, encoded_dim: int, adj_matrix, lr: float=1e-3, device: str='cuda:0', n_workers: int=5):
+def train_AE(mode: str, dataset: str, batch_size: int, epochs: int, encoded_dim: int, adj_matrix, lr: float=5e-3, device: str='cuda:0', n_workers: int=5):
     train_transform = transforms.Compose([
             transforms.RandomHorizontalFlip(p=0.3),
             transforms.ToTensor()
@@ -64,7 +69,7 @@ def train_AE(mode: str, dataset: str, batch_size: int, epochs: int, encoded_dim:
     encoders = [Encoder(channels, encoded_dim).to(device) for _ in range(n_workers)]
     decoders = [Decoder(channels, encoded_dim).to(device) for _ in range(n_workers)]
     
-    es = EarlyStopper(min_delta=0.1)
+    es = EarlyStopper()
 
     params_to_optimize = []
     for i in range(n_workers):
@@ -74,8 +79,8 @@ def train_AE(mode: str, dataset: str, batch_size: int, epochs: int, encoded_dim:
         ])
 
     criterion = nn.MSELoss()
-    optimizers = [torch.optim.SGD(params, lr=lr) for params in params_to_optimize]
-    schedulers = [torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, patience=3) for optimizer in optimizers]
+    optimizers = [torch.optim.Adam(params, lr=lr) for params in params_to_optimize]
+    #schedulers = [torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, patience=3) for optimizer in optimizers]
 
     for i in range(n_workers):
         encoders[i].train()
@@ -96,7 +101,7 @@ def train_AE(mode: str, dataset: str, batch_size: int, epochs: int, encoded_dim:
                 curr_loss.append(loss.item())
                 loss.backward()
                 optimizers[k].step()
-                schedulers[k].step(loss)
+                #schedulers[k].step(loss)
 
                 if batch_idx%len(trainloader)==len(trainloader)-1:
                     avg_train_loss = np.mean(curr_loss)

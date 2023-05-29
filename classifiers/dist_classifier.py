@@ -19,7 +19,7 @@ def train_classifier(model, dataset: str, mode: str, epochs: int, batch_size: in
             transforms.Normalize((.5,), (.5,))
         ])
 
-    es = EarlyStopper(min_delta=0.5)
+    es = EarlyStopper()
 
     if dataset=='MNIST':
         trainloaders = prepare_MNIST(mode, batch_size, train_transform)
@@ -42,7 +42,7 @@ def train_classifier(model, dataset: str, mode: str, epochs: int, batch_size: in
     classifier_losses = {0: [], 1: [], 2: [], 3: [], 4: []}
 
     optimizers = [torch.optim.Adam(classifier.parameters(), lr=lr) for classifier in classifiers]
-    schedulers = [torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, patience=3) for optimizer in optimizers]
+    #schedulers = [torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, patience=3) for optimizer in optimizers]
 
     for epoch in range(epochs):
         for k in range(n_workers):
@@ -61,7 +61,7 @@ def train_classifier(model, dataset: str, mode: str, epochs: int, batch_size: in
                 curr_loss.append(loss.item())
                 loss.backward()
                 optimizers[k].step()
-                schedulers[k].step(loss)
+                #schedulers[k].step(loss)
 
                 #check prediction accuracy
                 _, predicted = torch.max(classifier_output.data, 1)
