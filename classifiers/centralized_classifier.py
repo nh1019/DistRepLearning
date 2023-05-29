@@ -7,6 +7,7 @@ import numpy as np
 from utils.earlystopping import EarlyStopper
 from models.linear_classifier import LinearClassifier
 from utils.prepare_dataloaders import prepare_MNIST, prepare_CIFAR
+from utils.centralized_plotting import plot_tsne
 
 
 def train_classifier(model, dataset: str, mode: str, epochs: int, batch_size: int, encoded_dim: int, train_transform=None, lr: float=1e-3, device: str='cuda:0', simsiam=False):
@@ -81,6 +82,8 @@ def test_classifier(model, classifier, dataset: str, mode: str, device: str='cud
     
     encoder.eval()
     classifier.eval()
+
+    plot_tsne(encoder, dataset)
 
     if dataset=='MNIST':
         testloader = prepare_MNIST(mode, batch_size=8, train=False)
