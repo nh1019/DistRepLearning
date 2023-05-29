@@ -8,6 +8,7 @@ from sklearn.metrics import confusion_matrix
 
 from utils.earlystopping import EarlyStopper
 from models.linear_classifier import LinearClassifier
+from utils.dist_plotting import plot_tsne
 from utils.aggregate import aggregate
 from utils.prepare_dataloaders import prepare_MNIST, prepare_CIFAR
 
@@ -97,6 +98,8 @@ def test_classifier(model, classifier, dataset: str, mode: str, device: str='cud
         encoders[i].eval()
         classifiers[i].eval()
 
+    plot_tsne(model, dataset)
+
     if dataset=='MNIST':
         testloaders = prepare_MNIST(mode, batch_size=8, train=False)
     elif dataset=='CIFAR':
@@ -104,12 +107,20 @@ def test_classifier(model, classifier, dataset: str, mode: str, device: str='cud
         #save examples
         for j in range(n_workers):
             img = test_datasets[j][0][0].unsqueeze(0).cpu()
-            print(img)
-            print(img.shape)
             encoded_img = encoders[j](img.to(device)).detach().cpu()
-            pil_img = Image.fromarray(img.squeeze().numpy().astype(np.uint8).squeeze()).convert('RGB')
+            print(encoded_img.shape)
+
+            img = img.squeeze().numpy()
+            img = np.transpose(img, (1,2,0))
+            img = (img*255).astype(np.uint8)
+            encoded_img = encoded_img.squeeze.numpy()
+            encoded_img = np.transpose(encoded_img, (1,2,0))
+            encoded_img = (encoded_img*255).astype(np.uint8)
+
+            pil_img = Image.fromarray(img)
+            encoded_pil_img = Image.fromarray(encoded_img)
+
             pil_img.save(f'./results/original_{j}.png')
-            encoded_pil_img = Image.fromarray(encoded_img.squeeze().numpy().astype(np.uint8).squeeze()).convert('RGB')
             encoded_pil_img.save(f'./results/encoded_{j}.png')
 
 

@@ -1,7 +1,10 @@
 import os
 import csv
+import torchvision.transforms as transforms
 from matplotlib import pyplot as plt
 import seaborn as sns
+from sklearn.manifold import TSNE
+from prepare_dataloaders import *
 
 def plot_losses(losses: dict, title: str, output_dir=None):
     plt.clf()
@@ -73,3 +76,40 @@ def save_accuracies(accuracies, output):
     with open(os.path.join(output, 'test_accuracies'), 'w') as f:
         for key in accuracies.keys():
             f.write('{},{:.2f}\n'.format(key, accuracies[key]))
+
+
+'''
+tsne plotting taken from https://medium.com/analytics-vidhya/understanding-simclr-a-simple-framework-for-contrastive-learning-of-visual-representations-d544a9003f3c
+'''
+
+def plot_vecs_n_labels(v, dataset, labels, fname):
+    plt.axis('off')
+    sns.set_style('darkgrid')
+    sns.scatterplot(v[:,0], v[:,1], hue=labels, legend='full', palette=sns.color_palette('bright', 5))
+    
+    if dataset=='CIFAR':
+        plt.legend(['Airplane', 'Automobile', 'Bird', 'Cat', 'Deer', 'Dog', 'Frog', 'Horse', 'Ship', 'Truck'])
+    else:
+        plt.legend(['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'])
+
+    plt.savefig(fname)
+    plt.close()
+
+def plot_tsne(models, dataset, device='cuda:0'):
+    tsne = TSNE()
+
+    transform = transforms.ToTensor()
+    
+    if dataset=='CIFAR':
+        loader = prepare_CIFAR('centralized', batch_size=500, train_transform=transform)
+    else:
+        loader = prepare_MNIST('centralized', batch_size=500, train_transform=transform)
+
+    for i, model in enumerate(models):
+        loader_iter = iter(loader)
+        images, labels = next(loader_iter)
+        reps = model(images.to(device))
+        reps_tsne = tsne.fit_transform(reps.cpu().data)
+        plot_vecs_n_labels(reps_tsne, labels, f't-SNE_worker_{i}')
+
+        
