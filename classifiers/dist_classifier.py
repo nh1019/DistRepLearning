@@ -107,8 +107,10 @@ def test_classifier(model, classifier, dataset: str, mode: str, device: str='cud
         #save examples
         for j in range(n_workers):
             img = test_datasets[j][0][0].unsqueeze(0).cpu()
-            encoded_img = encoders[j](img.to(device)).detach().cpu().squeeze()
-            img = img.squeeze()
+            encoded_img = encoders[j](img.to(device)).detach().cpu()
+
+            img = (img.squeeze()).to(torch.uint8)
+            encoded_img = (encoded_img.squeeze()*255).to(torch.uint8)
 
             tvio.write_png(img, f'./results/original_{j}.png')
             tvio.write_png(encoded_img, f'./results/encoded_{j}.png')
