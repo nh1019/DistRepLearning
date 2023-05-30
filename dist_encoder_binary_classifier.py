@@ -21,7 +21,8 @@ def main(args):
     A = generate_graph(5, args.topology)
 
     encoders, classifiers, _, classifier_losses, classifier_accuracies = train_EC(
-        mode=args.model_training,
+        encoder_mode=args.model_training,
+        classifier_mode=args.classifier_training,
         dataset=args.dataset,
         batch_size=16,
         epochs=args.model_epochs,
@@ -36,7 +37,7 @@ def main(args):
     save_accuracies(test_accuracies, args.output)
 
 
-def train_EC(mode: str, dataset: str, batch_size: int, epochs: int, encoded_dim: int, adj_matrix, lr: float=1e-3, device: str='cuda:0', n_workers: int=5):
+def train_EC(encoder_mode: str, classifier_mode: str, dataset: str, batch_size: int, epochs: int, encoded_dim: int, adj_matrix, lr: float=1e-3, device: str='cuda:0', n_workers: int=5):
     train_transform = transforms.Compose([
             transforms.RandomHorizontalFlip(p=0.3),
             transforms.ToTensor()
@@ -46,14 +47,15 @@ def train_EC(mode: str, dataset: str, batch_size: int, epochs: int, encoded_dim:
 
     if dataset=='MNIST':
         channels = 1
-        trainloaders = prepare_MNIST(mode, batch_size, train_transform)
+        trainloaders = prepare_MNIST(encoder_mode, batch_size, train_transform)
     elif dataset=='CIFAR':
         channels = 3
-        trainloaders = prepare_CIFAR(mode, batch_size, train_transform)
+        trainloaders = prepare_CIFAR(encoder_mode, batch_size, train_transform)
 
     encoders = [Encoder(channels, encoded_dim).to(device) for _ in range(n_workers)]
     classifiers = [LinearClassifier(encoded_dim, 10).to(device) for _ in range(n_workers)]
     criterion = nn.BCELoss()
+    activation = nn.Sigmoid()
 
     params_to_optimize = []
 
@@ -64,6 +66,10 @@ def train_EC(mode: str, dataset: str, batch_size: int, epochs: int, encoded_dim:
         ])
     
     optimizers = [torch.optim.Adam(params, lr=lr) for params in params_to_optimize]
+
+    for i in range(n_workers):
+        encoders[i].train()
+        classifiers[i].train()
 
     classifier_losses = {0: [], 1: [], 2: [], 3: [], 4: []}
     classifier_accuracies = {0: [], 1: [], 2: [], 3: [], 4: []}
@@ -83,8 +89,8 @@ def train_EC(mode: str, dataset: str, batch_size: int, epochs: int, encoded_dim:
 
                 optimizers[k].zero_grad()
                 reps = encoders[k](features)
-                classifier_output = classifiers[k](reps)
-                loss = criterion(classifier_output, labels)
+                classifier_output = activation(classifiers[k](reps))
+                loss = criterion(classifier_output, labels.float())
                 curr_loss.append(loss.item())
                 loss.backward()
                 optimizers[k].step()
@@ -105,8 +111,10 @@ def train_EC(mode: str, dataset: str, batch_size: int, epochs: int, encoded_dim:
             print(f'Stopped training model after epoch {epoch}.')
             break
             
-        if mode=='collaborative':
+        if encoder_mode=='collaborative':
             encoders = aggregate(n_workers, encoders, adj_matrix)
+        
+        if classifier_mode=='collaborative':
             classifiers = aggregate(n_workers, classifiers, adj_matrix)
 
 
