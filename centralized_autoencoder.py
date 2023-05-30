@@ -68,7 +68,7 @@ def train_AE(mode: str, dataset: str, batch_size: int, epochs: int, encoded_dim:
 
     criterion = nn.MSELoss()
     optimizer = torch.optim.Adam(params_to_optimize, lr=lr)
-    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=20, gamma=0.9)
+    #scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=20, gamma=0.9)
 
     encoder.train()
     decoder.train()
@@ -86,7 +86,7 @@ def train_AE(mode: str, dataset: str, batch_size: int, epochs: int, encoded_dim:
             curr_loss.append(loss.item())
             loss.backward()
             optimizer.step()
-            scheduler.step()
+            #scheduler.step()
 
             if batch_idx%len(trainloader)==len(trainloader)-1:
                 avg_train_loss = np.mean(curr_loss)
