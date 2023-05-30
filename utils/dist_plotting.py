@@ -110,6 +110,6 @@ def plot_tsne(models, dataset, device='cuda:0'):
         images, labels = next(loader_iter)
         reps = model(images.to(device))
         reps_tsne = tsne.fit_transform(reps.cpu().data)
-        plot_vecs_n_labels(reps_tsne, labels, f't-SNE_worker_{i}')
+        plot_vecs_n_labels(reps_tsne, dataset, labels, f't-SNE_worker_{i}')
 
         
