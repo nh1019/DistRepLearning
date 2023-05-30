@@ -110,8 +110,8 @@ def test_classifier(model, classifier, dataset: str, mode: str, device: str='cud
             encoded_img = encoders[j](img.to(device)).detach().cpu().squeeze()
             img = img.squeeze()
 
-            tvio.write_png(f'./results/original_{j}.png', img)
-            tvio.write_png(f'./results/encoded_{j}.png', encoded_img)
+            tvio.write_png(img, f'./results/original_{j}.png')
+            tvio.write_png(encoded_img, f'./results/encoded_{j}.png')
 
 
     worker_accuracies = {0: [], 1: [], 2: [], 3: [], 4: []}
