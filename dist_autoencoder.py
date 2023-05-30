@@ -105,11 +105,11 @@ def train_AE(mode: str,
     criterion = nn.MSELoss()
 
     if optimizer=='Adam':
-        optimizers = [torch.optim.Adam(params, lr=lr) for params in params_to_optimize]
+        optimizers = [torch.optim.Adam(params, lr=initial_lr) for params in params_to_optimize]
     elif optimizer=='SGD':
-        optimizers = [torch.optim.SGD(params, lr=lr) for params in params_to_optimize]
+        optimizers = [torch.optim.SGD(params, lr=initial_lr) for params in params_to_optimize]
     elif optimizer=='AdamW':
-        optimizers = [torch.optim.AdamW(params, lr=lr) for params in params_to_optimize]
+        optimizers = [torch.optim.AdamW(params, lr=initial_lr) for params in params_to_optimize]
     else:
         raise ValueError('Please choose an implemented optimizer.')
 
@@ -119,6 +119,23 @@ def train_AE(mode: str,
     for i in range(n_workers):
         encoders[i].train()
         decoders[i].train()
+
+    for epoch in range(warmup_epochs):
+        current_lr = initial_lr + (desired_lr-initial_lr)*(epoch/warmup_epochs)
+        for k in range(n_workers):
+            trainloader = trainloaders[k]
+            for param_group in optimizers[k].param_groups:
+                param_group['lr'] = current_lr
+            for batch_idx, (features, _) in tqdm(enumerate(trainloader)):
+                features = features.to(device)
+
+                optimizers[k].zero_grad()
+                encoded = encoders[k](features)
+                decoded = decoders[k](encoded)
+
+                loss = criterion(decoded, features)
+                loss.backward()
+                optimizers[k].step()
 
     for epoch in range(epochs):
         for k in range(n_workers):
