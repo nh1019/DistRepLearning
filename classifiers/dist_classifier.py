@@ -13,14 +13,29 @@ from utils.aggregate import aggregate
 from utils.prepare_dataloaders import prepare_MNIST, prepare_CIFAR
 
 
-def train_classifier(model, dataset: str, mode: str, epochs: int, batch_size: int, encoded_dim: int, adj_matrix, train_transform=None, lr: float=1e-3, device: str='cuda:0', n_workers: int=5, simsiam=False):
+def train_classifier(model, 
+                     dataset: str, 
+                     mode: str, 
+                     epochs: int, 
+                     batch_size: int, 
+                     encoded_dim: int, 
+                     optimizer: str,
+                     warmup_epochs: int,
+                     scheduler: bool,
+                     adj_matrix, 
+                     train_transform=None, 
+                     lr: float=1e-3, 
+                     device: str='cuda:0', 
+                     n_workers: int=5, 
+                     simsiam=False):
+    
     if train_transform is None:
         train_transform = transforms.Compose([
             transforms.ToTensor(),
             transforms.Normalize((.5,), (.5,))
         ])
 
-    es = EarlyStopper()
+    #es = EarlyStopper()
 
     if dataset=='MNIST':
         trainloaders = prepare_MNIST(mode, batch_size, train_transform)
@@ -42,8 +57,40 @@ def train_classifier(model, dataset: str, mode: str, epochs: int, batch_size: in
     classifier_accuracies = {0: [], 1: [], 2: [], 3: [], 4: []}
     classifier_losses = {0: [], 1: [], 2: [], 3: [], 4: []}
 
-    optimizers = [torch.optim.Adam(classifier.parameters(), lr=lr) for classifier in classifiers]
-    #schedulers = [torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, patience=3) for optimizer in optimizers]
+    if warmup_epochs:
+        desired_lr = lr
+        initial_lr = desired_lr/100
+    else:
+        initial_lr = lr
+
+    if optimizer=='Adam':
+        optimizers = [torch.optim.Adam(classifier.parameters(), lr=initial_lr) for classifier in classifiers]
+    elif optimizer=='SGD':
+        optimizers = [torch.optim.SGD(classifier.parameters(), lr=initial_lr) for classifier in classifiers]
+    elif optimizer=='AdamW':
+        optimizers = [torch.optim.AdamW(classifier.parameters(), lr=initial_lr) for classifier in classifiers]
+    else:
+        raise ValueError('Please choose an implemented optimizer.')
+
+    if scheduler:
+        schedulers = [torch.optim.lr_scheduler.StepLR(optimizer, step_size=20) for optimizer in optimizers]
+
+    for epoch in range(warmup_epochs):
+        current_lr = initial_lr + (desired_lr-initial_lr)*(epoch/warmup_epochs)
+        for k in range(n_workers):
+            trainloader = trainloaders[k]
+            for param_group in optimizers[k].param_groups:
+                param_group['lr'] = current_lr
+            for batch_idx, (features, _) in tqdm(enumerate(trainloader)):
+                features = features.to(device)
+
+                optimizers[k].zero_grad()
+                reps = models[k](features)
+                classifier_output = classifiers[k](reps)
+                loss = criterion(classifier_output, labels)
+
+                loss.backward()
+                optimizers[k].step()
 
     for epoch in range(epochs):
         for k in range(n_workers):
@@ -62,7 +109,9 @@ def train_classifier(model, dataset: str, mode: str, epochs: int, batch_size: in
                 curr_loss.append(loss.item())
                 loss.backward()
                 optimizers[k].step()
-                #schedulers[k].step(loss)
+
+                if scheduler:
+                    schedulers[k].step()
 
                 #check prediction accuracy
                 _, predicted = torch.max(classifier_output.data, 1)
@@ -76,17 +125,26 @@ def train_classifier(model, dataset: str, mode: str, epochs: int, batch_size: in
                     classifier_losses[k].append(avg_train_loss)
                     classifier_accuracies[k].append(avg_train_acc)
         
+        '''
         curr_average = np.mean([classifier_losses[k][epoch] for k in classifier_losses.keys()])
         if es.early_stop(curr_average):
             print(f'Stopped training classifier after epoch {epoch}.')
             break
+        '''    
 
         if mode=='collaborative':
             classifiers = aggregate(n_workers, classifiers, adj_matrix)
 
     return classifiers, classifier_losses, classifier_accuracies
 
-def test_classifier(model, classifier, dataset: str, mode: str, device: str='cuda:0', n_workers: int=5, simsiam=False):
+def test_classifier(model, 
+                    classifier, 
+                    dataset: str, 
+                    mode: str, 
+                    device: str='cuda:0', 
+                    n_workers: int=5, 
+                    simsiam=False):
+    
     classifiers = classifier
 
     if simsiam:
@@ -108,7 +166,7 @@ def test_classifier(model, classifier, dataset: str, mode: str, device: str='cud
         for j in range(n_workers):
             img = test_datasets[j][0][0].cpu()
             print(img)
-            encoded_img = encoders[j](img.unsqueeze(0).to(device)).detach().cpu()
+            encoded_img = encoders[j](img.unsqueeze(0).to(device)).detach().cpu().reshape(1, 1, -1)
             print(encoded_img.shape)
             print(encoded_img)
 

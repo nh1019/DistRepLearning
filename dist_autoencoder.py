@@ -25,6 +25,9 @@ def main(args):
         batch_size=16,
         epochs=args.model_epochs,
         encoded_dim=args.encoded_dim,
+        optimizer=args.optimizer,
+        warmup_epochs=args.warmup_epochs,
+        scheduler=args.scheduler,
         adj_matrix=A)
     
     plot_losses(AE_losses, f'{args.model_training}_Autoencoder_MSE_Losses', args.output)
@@ -36,6 +39,9 @@ def main(args):
         epochs=args.classifier_epochs,
         batch_size=16,
         encoded_dim=encoded_dim,
+        optimizer=args.optimizer,
+        warmup_epochs=args.warmup_epochs,
+        scheduler=args.scheduler,
         adj_matrix=A)
     
     plot_losses(classifier_losses, f'Autoencoder_{args.classifier_training}_Classifier_Losses', args.output)
@@ -52,7 +58,19 @@ def main(args):
     
     save_accuracies(test_accuracies, args.output)
 
-def train_AE(mode: str, dataset: str, batch_size: int, epochs: int, encoded_dim: int, adj_matrix, lr: float=5e-3, device: str='cuda:0', n_workers: int=5):
+def train_AE(mode: str, 
+             dataset: str, 
+             batch_size: int, 
+             epochs: int, 
+             encoded_dim: int, 
+             optimizer: str,
+             warmup_epochs: int,
+             scheduler: bool,
+             adj_matrix,
+             lr: float=5e-3, 
+             device: str='cuda:0', 
+             n_workers: int=5):
+    
     train_transform = transforms.Compose([
             transforms.RandomHorizontalFlip(p=0.3),
             transforms.ToTensor()
@@ -69,7 +87,7 @@ def train_AE(mode: str, dataset: str, batch_size: int, epochs: int, encoded_dim:
     encoders = [Encoder(channels, encoded_dim).to(device) for _ in range(n_workers)]
     decoders = [Decoder(channels, encoded_dim).to(device) for _ in range(n_workers)]
     
-    es = EarlyStopper()
+    #es = EarlyStopper()
 
     params_to_optimize = []
     for i in range(n_workers):
@@ -78,9 +96,25 @@ def train_AE(mode: str, dataset: str, batch_size: int, epochs: int, encoded_dim:
             {'params': decoders[i].parameters()}
         ])
 
+    if warmup_epochs:
+        desired_lr = lr
+        initial_lr = desired_lr/100
+    else:
+        initial_lr = lr
+
     criterion = nn.MSELoss()
-    optimizers = [torch.optim.Adam(params, lr=lr) for params in params_to_optimize]
-    #schedulers = [torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, patience=3) for optimizer in optimizers]
+
+    if optimizer=='Adam':
+        optimizers = [torch.optim.Adam(params, lr=lr) for params in params_to_optimize]
+    elif optimizer=='SGD':
+        optimizers = [torch.optim.SGD(params, lr=lr) for params in params_to_optimize]
+    elif optimizer=='AdamW':
+        optimizers = [torch.optim.AdamW(params, lr=lr) for params in params_to_optimize]
+    else:
+        raise ValueError('Please choose an implemented optimizer.')
+
+    if scheduler:
+        schedulers = [torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, patience=3, verbose=True) for optimizer in optimizers]
 
     for i in range(n_workers):
         encoders[i].train()
@@ -101,18 +135,22 @@ def train_AE(mode: str, dataset: str, batch_size: int, epochs: int, encoded_dim:
                 curr_loss.append(loss.item())
                 loss.backward()
                 optimizers[k].step()
-                #schedulers[k].step(loss)
+
+                if scheduler:
+                    schedulers[k].step(loss)
 
                 if batch_idx%len(trainloader)==len(trainloader)-1:
                     avg_train_loss = np.mean(curr_loss)
                     print(f'In epoch {epoch} for worker {k}, average training loss is {avg_train_loss}.')
                     worker_losses[k].append(avg_train_loss)
 
+        '''
         #check whether to stop early 
         curr_average = np.mean([worker_losses[k][epoch] for k in worker_losses.keys()])
         if es.early_stop(curr_average):
             print(f'Stopped training autoencoder after epoch {epoch}.')
             break
+        '''
         #aggregate weights at the end of each epoch
         if mode=='collaborative':
             encoders = aggregate(n_workers, encoders, adj_matrix)
@@ -131,6 +169,9 @@ if __name__=='__main__':
     parser.add_argument('--testing', type=str, help='choose between local and global (determines the data on which the classifier is tested)', required=True)
     parser.add_argument('--dataset', type=str, help='choose between MNIST and CIFAR (CIFAR-10)', required=True)
     parser.add_argument('--output', type=str, help='specify a folder for output files', required=True)
+    parser.add_argument('--optimizer', type=str, help='choose between SGD, Adam, and AdamW', required=True)
+    parser.add_argument('--warmup_epochs', type=int, default=0)
+    parser.add_argument('--scheduler', type=int, help='choose True to include a learning rate scheduler', default=False)
     parser.add_argument('--topology', type=str, help='choose a network topology to organise worker nodes', default='random')
 
     args = parser.parse_args()
