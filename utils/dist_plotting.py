@@ -85,7 +85,7 @@ tsne plotting taken from https://medium.com/analytics-vidhya/understanding-simcl
 def plot_vecs_n_labels(v, dataset, labels, fname):
     plt.axis('off')
     sns.set_style('darkgrid')
-    sns.scatterplot(x=v[:,0], y=v[:,1], hue=labels, legend='full', palette=sns.color_palette('bright', 10))
+    sns.scatterplot(x=v[:,0], y=v[:,1], hue=labels, style='dots', legend='full', palette=sns.color_palette('bright', 10))
     
     if dataset=='CIFAR':
         plt.legend(['Airplane', 'Automobile', 'Bird', 'Cat', 'Deer', 'Dog', 'Frog', 'Horse', 'Ship', 'Truck'])
@@ -110,6 +110,6 @@ def plot_tsne(models, dataset, device='cuda:0'):
         images, labels = next(loader_iter)
         reps = model(images.to(device))
         reps_tsne = tsne.fit_transform(reps.cpu().data)
-        plot_vecs_n_labels(reps_tsne, dataset, labels, f't-SNE_worker_{i}')
+        plot_vecs_n_labels(reps_tsne, dataset, labels, f'./results/t-SNE_worker_{i}')
 
         
