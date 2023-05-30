@@ -108,10 +108,11 @@ def test_classifier(model, classifier, dataset: str, mode: str, device: str='cud
         for j in range(n_workers):
             img = test_datasets[j][0][0].cpu()
             print(img)
-            encoded_img = encoders[j](img.to(device)).detach().cpu()
+            encoded_img = encoders[j](img.unsqueeze(0).to(device)).detach().cpu()
+            print(encoded_img.shape)
             print(encoded_img)
 
-            img = (img.squeeze()*255).to(torch.uint8)
+            img = (img*255).to(torch.uint8)
             print(img)
             encoded_img = (encoded_img.squeeze()*255).to(torch.uint8)
 
