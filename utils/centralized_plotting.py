@@ -51,7 +51,7 @@ def save_accuracy(accuracy, output):
 def plot_vecs_n_labels(v, dataset, labels, fname):
     plt.axis('off')
     sns.set_style('darkgrid')
-    sns.scatterplot(v[:,0], v[:,1], hue=labels, legend='full', palette=sns.color_palette('bright', 5))
+    sns.scatterplot(x=v[:,0], y=v[:,1], hue=labels, legend='full', palette=sns.color_palette('bright', 5))
     
     if dataset=='CIFAR':
         plt.legend(['Airplane', 'Automobile', 'Bird', 'Cat', 'Deer', 'Dog', 'Frog', 'Horse', 'Ship', 'Truck'])
