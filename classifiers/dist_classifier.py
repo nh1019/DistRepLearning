@@ -172,7 +172,7 @@ def test_classifier(model,
 
             img = (img*255).to(torch.uint8)
             print(img)
-            encoded_img = (encoded_img.squeeze()*255).to(torch.uint8)
+            encoded_img = (encoded_img*255).to(torch.uint8)
 
             tvio.write_png(img, f'./results/original_{j}.png')
             tvio.write_png(encoded_img, f'./results/encoded_{j}.png')
