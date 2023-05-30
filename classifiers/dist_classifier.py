@@ -113,7 +113,7 @@ def test_classifier(model, classifier, dataset: str, mode: str, device: str='cud
             img = img.squeeze().numpy()
             img = np.transpose(img, (1,2,0))
             img = (img*255).astype(np.uint8)
-            encoded_img = encoded_img.squeeze.numpy()
+            encoded_img = encoded_img.squeeze().numpy()
             encoded_img = np.transpose(encoded_img, (1,2,0))
             encoded_img = (encoded_img*255).astype(np.uint8)
 
