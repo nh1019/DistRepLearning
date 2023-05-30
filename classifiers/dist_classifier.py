@@ -3,7 +3,7 @@ import torch.nn as nn
 from torchvision import transforms
 from tqdm import tqdm
 import numpy as np
-from PIL import Image
+import torchvision.io as tvio
 from sklearn.metrics import confusion_matrix
 
 from utils.earlystopping import EarlyStopper
@@ -107,19 +107,11 @@ def test_classifier(model, classifier, dataset: str, mode: str, device: str='cud
         #save examples
         for j in range(n_workers):
             img = test_datasets[j][0][0].unsqueeze(0).cpu()
-            encoded_img = encoders[j](img.to(device)).detach().cpu()
-            print(encoded_img.shape)
+            encoded_img = encoders[j](img.to(device)).detach().cpu().squeeze()
+            img = img.squeeze()
 
-            img = img.squeeze().numpy()
-            img = (img*255).astype(np.uint8)
-            encoded_img = encoded_img.squeeze().numpy()
-            encoded_img = (encoded_img*255).astype(np.uint8)
-
-            pil_img = Image.fromarray(img)
-            encoded_pil_img = Image.fromarray(encoded_img)
-
-            pil_img.save(f'./results/original_{j}.png')
-            encoded_pil_img.save(f'./results/encoded_{j}.png')
+            tvio.write_png(f'./results/original_{j}.png', img)
+            tvio.write_png(f'./results/encoded_{j}.png', encoded_img)
 
 
     worker_accuracies = {0: [], 1: [], 2: [], 3: [], 4: []}
