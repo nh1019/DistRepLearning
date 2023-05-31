@@ -118,7 +118,7 @@ def train_AE(mode: str,
             optim.step()
 
     if scheduler:
-        scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optim, patience=5, factor=0.5, verbose=True)
+        sched = torch.optim.lr_scheduler.ReduceLROnPlateau(optim, patience=5, factor=0.5, verbose=True)
 
     for epoch in range(epochs):
         curr_loss = []
@@ -134,13 +134,13 @@ def train_AE(mode: str,
             loss.backward()
             optim.step()
 
-            if scheduler:
-                scheduler.step(loss)
-
             if batch_idx%len(trainloader)==len(trainloader)-1:
                 avg_train_loss = np.mean(curr_loss)
                 print(f'In epoch {epoch}, average training loss is {avg_train_loss}.')
                 epoch_losses.append(avg_train_loss)
+
+        if scheduler:
+                sched.step(avg_train_loss)
 
     '''
     #check whether to stop early 

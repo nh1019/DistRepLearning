@@ -100,9 +100,6 @@ def train_classifier(model,
             loss.backward()
             optim.step()
 
-            if scheduler:
-                sched.step()
-
             #check prediction accuracy
             _, predicted = torch.max(classifier_output.data, 1)
             total += labels.size(0)
@@ -114,6 +111,9 @@ def train_classifier(model,
                 print(f'In epoch {epoch}, average training loss is {avg_train_loss}, average training accuracy is {avg_train_acc}%.')
                 classifier_losses.append(avg_train_loss)
                 classifier_accuracies.append(avg_train_acc)
+
+        if scheduler:
+                sched.step()
 
         '''
         if es.early_stop(avg_train_loss):
