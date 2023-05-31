@@ -73,7 +73,7 @@ def train_classifier(model,
         raise ValueError('Please choose an implemented optimizer.')
 
     if scheduler:
-        schedulers = [torch.optim.lr_scheduler.StepLR(optimizer, step_size=20) for optimizer in optimizers]
+        schedulers = [torch.optim.lr_scheduler.StepLR(optimizer, step_size=10) for optimizer in optimizers]
 
     for epoch in range(warmup_epochs):
         current_lr = initial_lr + (desired_lr-initial_lr)*(epoch/warmup_epochs)
@@ -132,7 +132,7 @@ def train_classifier(model,
             break
         '''    
 
-        if mode=='collaborative':
+        if mode=='collaborative' and epoch != epochs-1:
             classifiers = aggregate(n_workers, classifiers, adj_matrix)
 
     return classifiers, classifier_losses, classifier_accuracies
