@@ -135,7 +135,7 @@ def train_AE(mode: str,
                 optimizers[k].step()
 
     if scheduler:
-        schedulers = [torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, patience=10, factor=0.5, verbose=True) for optimizer in optimizers]
+        schedulers = [torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, patience=5, factor=0.5, verbose=True) for optimizer in optimizers]
 
     for epoch in range(epochs):
         for k in range(n_workers):
