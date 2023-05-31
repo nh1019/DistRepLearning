@@ -10,14 +10,26 @@ from utils.prepare_dataloaders import prepare_MNIST, prepare_CIFAR
 from utils.centralized_plotting import plot_tsne
 
 
-def train_classifier(model, dataset: str, mode: str, epochs: int, batch_size: int, encoded_dim: int, train_transform=None, lr: float=1e-3, device: str='cuda:0', simsiam=False):
+def train_classifier(model, 
+                     dataset: str, 
+                     mode: str, 
+                     epochs: int, 
+                     batch_size: int, 
+                     encoded_dim: int, 
+                     optimizer: str,
+                     warmup_epochs: int,
+                     scheduler: bool,
+                     train_transform=None, 
+                     lr: float=1e-3, 
+                     device: str='cuda:0', 
+                     simsiam=False):
     if train_transform is None:
         train_transform = transforms.Compose([
             transforms.ToTensor(),
             transforms.Normalize((.5,), (.5,))
         ])
 
-    es = EarlyStopper(min_delta=0.2)
+    #es = EarlyStopper(min_delta=0.2)
 
     if dataset=='MNIST':
         trainloader = prepare_MNIST(mode, batch_size, train_transform)
@@ -28,14 +40,46 @@ def train_classifier(model, dataset: str, mode: str, epochs: int, batch_size: in
         encoder = model.encoder
     else:
         encoder = model
+
+    if warmup_epochs:
+        desired_lr = lr
+        initial_lr = desired_lr/100
+    else:
+        initial_lr = lr
         
     classifier = LinearClassifier(encoded_dim, 10).to(device)
-    optimizer = torch.optim.Adam(classifier.parameters(), lr=lr)
-    #schedulers = [torch.optim.lr_scheduler.StepLR(optimizer, step_size=20, gamma=0.9) for optimizer in optimizers]
+
+    if optimizer=='Adam':
+        optim = torch.optim.Adam(classifier.parameters(), lr=initial_lr)
+    elif optimizer=='AdamW':
+        optim = torch.optim.AdamW(classifier.parameters(), lr=initial_lr)
+    elif optimizer=='SGD':
+        optim = torch.optim.SGD(classifier.parameters(), lr=initial_lr)
+    else:
+        raise ValueError('Please choose an implemented optimizer.')
+
+    if scheduler:
+        sched = torch.optim.lr_scheduler.StepLR(optimizer, step_size=10)
+
     criterion = nn.CrossEntropyLoss()
 
     encoder.eval()
     classifier.train()
+
+    for epoch in range(warmup_epochs):
+        current_lr = initial_lr + (desired_lr-initial_lr)*(epoch/warmup_epochs)
+        for param_group in optim.param_groups:
+            param_group['lr'] = current_lr
+        for batch_idx, (features, labels) in tqdm(enumerate(trainloader)):
+            features, labels = features.to(device), labels.to(device)
+
+            optim.zero_grad()
+            reps = encoder(features)
+            classifier_output = classifier(reps)
+            loss = criterion(classifier_output, labels)
+
+            loss.backward()
+            optim.step()
 
     classifier_accuracies = []
     classifier_losses = []
@@ -56,6 +100,9 @@ def train_classifier(model, dataset: str, mode: str, epochs: int, batch_size: in
             loss.backward()
             optimizer.step()
 
+            if scheduler:
+                sched.step()
+
             #check prediction accuracy
             _, predicted = torch.max(classifier_output.data, 1)
             total += labels.size(0)
@@ -68,9 +115,11 @@ def train_classifier(model, dataset: str, mode: str, epochs: int, batch_size: in
                 classifier_losses.append(avg_train_loss)
                 classifier_accuracies.append(avg_train_acc)
 
+        '''
         if es.early_stop(avg_train_loss):
             print(f'Stopped training classifier after epoch {epoch}.')
             break
+        '''
 
     return classifier, classifier_losses, classifier_accuracies
 

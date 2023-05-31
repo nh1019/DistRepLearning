@@ -81,8 +81,8 @@ def train_classifier(model,
             trainloader = trainloaders[k]
             for param_group in optimizers[k].param_groups:
                 param_group['lr'] = current_lr
-            for batch_idx, (features, _) in tqdm(enumerate(trainloader)):
-                features = features.to(device)
+            for batch_idx, (features, labels) in tqdm(enumerate(trainloader)):
+                features, labels = features.to(device), labels.to(device)
 
                 optimizers[k].zero_grad()
                 reps = models[k](features)

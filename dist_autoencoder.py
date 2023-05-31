@@ -188,7 +188,7 @@ if __name__=='__main__':
     parser.add_argument('--output', type=str, help='specify a folder for output files', required=True)
     parser.add_argument('--optimizer', type=str, help='choose between SGD, Adam, and AdamW', required=True)
     parser.add_argument('--warmup_epochs', type=int, default=0)
-    parser.add_argument('--scheduler', type=int, help='choose True to include a learning rate scheduler', default=False)
+    parser.add_argument('--scheduler', action='store_true', default=False)
     parser.add_argument('--topology', type=str, help='choose a network topology to organise worker nodes', default='random')
 
     args = parser.parse_args()

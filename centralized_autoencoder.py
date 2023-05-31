@@ -20,7 +20,10 @@ def main(args):
         dataset=args.dataset,
         batch_size=16,
         epochs=args.model_epochs,
-        encoded_dim=args.encoded_dim,)
+        encoded_dim=args.encoded_dim,
+        optimizer=args.optimizer,
+        warmup_epochs=args.warmup_epochs,
+        scheduler=args.scheduler)
     
     plot_losses(AE_losses, f'{args.model_training}_Autoencoder_MSE_Losses', args.output)
 
@@ -30,7 +33,10 @@ def main(args):
         mode=args.classifier_training,
         epochs=args.classifier_epochs,
         batch_size=16,
-        encoded_dim=encoded_dim)
+        encoded_dim=encoded_dim,
+        optimizer=args.optimizer,
+        warmup_epochs=args.warmup_epochs,
+        scheduler=args.scheduler)
     
     plot_losses(classifier_losses, f'Autoencoder_{args.classifier_training}_Classifier_Losses', args.output)
     plot_accuracies(classifier_accuracies, f'Autoencoder_{args.classifier_training}_Classifier_Accuracies', args.output)
@@ -44,7 +50,17 @@ def main(args):
     save_accuracy(test_accuracies, args.output)
 
 
-def train_AE(mode: str, dataset: str, batch_size: int, epochs: int, encoded_dim: int, lr: float=1e-4, device: str='cuda:0'):
+def train_AE(mode: str, 
+             dataset: str, 
+             batch_size: int, 
+             epochs: int, 
+             encoded_dim: int, 
+             optimizer: str, 
+             warmup_epochs: int, 
+             scheduler: bool,
+             lr: float=1e-4, 
+             device: str='cuda:0'):
+    
     train_transform = transforms.Compose([
             transforms.RandomHorizontalFlip(p=0.3),
             transforms.ToTensor()
@@ -61,42 +77,77 @@ def train_AE(mode: str, dataset: str, batch_size: int, epochs: int, encoded_dim:
     encoder = Encoder(channels, encoded_dim).to(device)
     decoder = Decoder(channels, encoded_dim).to(device)
     
-    es = EarlyStopper(min_delta=0.1)
+    #es = EarlyStopper(min_delta=0.1)
 
     params_to_optimize = [{'params': encoder.parameters()}, 
                           {'params': decoder.parameters()}]
 
+    if warmup_epochs:
+        desired_lr = lr
+        initial_lr = desired_lr/100
+    else:
+        initial_lr = lr
+
     criterion = nn.MSELoss()
-    optimizer = torch.optim.Adam(params_to_optimize, lr=lr)
-    #scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=20, gamma=0.9)
+
+    if optimizer=='Adam':
+        optim = torch.optim.Adam(params_to_optimize, lr=initial_lr)
+    elif optimizer=='AdamW':
+        optim = torch.optim.AdamW(params_to_optimize, lr=initial_lr)
+    elif optimizer=='SGD':
+        optim = torch.optim.SGD(params_to_optimize, lr=initial_lr)
+    else:
+        raise ValueError('Please choose an implemented optimizer.')
+    
+    if scheduler:
+        scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optim, patience=3, verbose=True)
 
     encoder.train()
     decoder.train()
+
+    for epoch in range(warmup_epochs):
+        current_lr = initial_lr + (desired_lr-initial_lr)*(epoch/warmup_epochs)
+        for param_group in optim.param_groups:
+            param_group['lr'] = current_lr
+        for batch_idx, (features, _) in tqdm(enumerate(trainloader)):
+            features = features.to(device)
+
+            optim.zero_grad()
+            encoded = encoder(features)
+            decoded = decoder(encoded)
+
+            loss = criterion(decoded, features)
+            loss.backward()
+            optim.step()
 
     for epoch in range(epochs):
         curr_loss = []
         for batch_idx, (features, _) in tqdm(enumerate(trainloader)):
             features = features.to(device)
 
-            optimizer.zero_grad()
+            optim.zero_grad()
             encoded = encoder(features)
             decoded = decoder(encoded)
 
             loss = criterion(decoded, features)
             curr_loss.append(loss.item())
             loss.backward()
-            optimizer.step()
-            #scheduler.step()
+            optim.step()
+
+            if scheduler:
+                scheduler.step(loss)
 
             if batch_idx%len(trainloader)==len(trainloader)-1:
                 avg_train_loss = np.mean(curr_loss)
                 print(f'In epoch {epoch}, average training loss is {avg_train_loss}.')
                 epoch_losses.append(avg_train_loss)
 
+    '''
     #check whether to stop early 
         if es.early_stop(avg_train_loss):
             print(f'Stopped training autoencoder after epoch {epoch}.')
             break
+    '''
 
     return encoder, epoch_losses, encoded_dim
 
@@ -111,6 +162,9 @@ if __name__=='__main__':
     parser.add_argument('--testing', type=str, help='choose between local and global (determines the data on which the classifier is tested)', required=True)
     parser.add_argument('--dataset', type=str, help='choose between MNIST and CIFAR (CIFAR-10)', required=True)
     parser.add_argument('--output', type=str, help='specify a folder for output files', required=True)
+    parser.add_argument('--optimizer', type=str, help='choose between SGD, Adam, and AdamW', required=True)
+    parser.add_argument('--warmup_epochs', type=int, default=0)
+    parser.add_argument('--scheduler', action='store_true', default=False)
 
     args = parser.parse_args()
 
