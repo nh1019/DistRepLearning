@@ -122,11 +122,11 @@ def train_classifier(model,
                     classifier_losses[k].append(avg_train_loss)
                     classifier_accuracies[k].append(avg_train_acc)
         
-        
-        curr_average = np.mean([classifier_losses[k][epoch] for k in classifier_losses.keys()])
         if scheduler:
             for k in range(n_workers):
-                schedulers[k].step(curr_average)
+                schedulers[k].step()
+
+        #curr_average = np.mean([classifier_losses[k][epoch] for k in classifier_losses.keys()])
         '''
         if es.early_stop(curr_average):
             print(f'Stopped training classifier after epoch {epoch}.')
