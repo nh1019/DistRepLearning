@@ -123,7 +123,7 @@ def train_AE(mode: str,
             trainloader = trainloaders[k]
             for param_group in optimizers[k].param_groups:
                 param_group['lr'] = current_lr
-            for batch_idx, (features, _) in enumerate(trainloader):
+            for batch_idx, (features, _) in tqdm(enumerate(trainloader)):
                 features = features.to(device)
 
                 optimizers[k].zero_grad()
@@ -141,7 +141,7 @@ def train_AE(mode: str,
         for k in range(n_workers):
             curr_loss = []
             trainloader = trainloaders[k]
-            for batch_idx, (features, _) in enumerate(trainloader):
+            for batch_idx, (features, _) in tqdm(enumerate(trainloader)):
                 features = features.to(device)
 
                 optimizers[k].zero_grad()

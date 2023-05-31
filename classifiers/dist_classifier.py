@@ -78,7 +78,7 @@ def train_classifier(model,
             trainloader = trainloaders[k]
             for param_group in optimizers[k].param_groups:
                 param_group['lr'] = current_lr
-            for batch_idx, (features, labels) in enumerate(trainloader):
+            for batch_idx, (features, labels) in tqdm(enumerate(trainloader)):
                 features, labels = features.to(device), labels.to(device)
 
                 optimizers[k].zero_grad()
@@ -90,7 +90,7 @@ def train_classifier(model,
                 optimizers[k].step()
 
     if scheduler:
-        schedulers = [torch.optim.lr_scheduler.StepLR(optimizer, step_size=10) for optimizer in optimizers]
+        schedulers = [torch.optim.lr_scheduler.StepLR(optimizer, step_size=10, verbose=True) for optimizer in optimizers]
 
     for epoch in range(epochs):
         for k in range(n_workers):
@@ -98,7 +98,7 @@ def train_classifier(model,
             correct = 0
             curr_loss = []
             trainloader = trainloaders[k]
-            for batch_idx, (features, labels) in enumerate(trainloader):
+            for batch_idx, (features, labels) in tqdm(enumerate(trainloader)):
                 features, labels = features.to(device), labels.to(device)
 
                 optimizers[k].zero_grad()
