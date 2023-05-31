@@ -91,14 +91,14 @@ def train_classifier(model,
         for batch_idx, (features, labels) in tqdm(enumerate(trainloader)):
             features, labels = features.to(device), labels.to(device)
 
-            optimizer.zero_grad()
+            optim.zero_grad()
             reps = encoder(features)
             classifier_output = classifier(reps)
             loss = criterion(classifier_output, labels)
 
             curr_loss.append(loss.item())
             loss.backward()
-            optimizer.step()
+            optim.step()
 
             if scheduler:
                 sched.step()
