@@ -113,9 +113,6 @@ def train_AE(mode: str,
     else:
         raise ValueError('Please choose an implemented optimizer.')
 
-    if scheduler:
-        schedulers = [torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, patience=3, verbose=True) for optimizer in optimizers]
-
     for i in range(n_workers):
         encoders[i].train()
         decoders[i].train()
@@ -136,6 +133,9 @@ def train_AE(mode: str,
                 loss = criterion(decoded, features)
                 loss.backward()
                 optimizers[k].step()
+
+    if scheduler:
+        schedulers = [torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, patience=5, factor=0.5, verbose=True) for optimizer in optimizers]
 
     for epoch in range(epochs):
         for k in range(n_workers):

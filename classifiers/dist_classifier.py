@@ -72,9 +72,6 @@ def train_classifier(model,
     else:
         raise ValueError('Please choose an implemented optimizer.')
 
-    if scheduler:
-        schedulers = [torch.optim.lr_scheduler.StepLR(optimizer, step_size=10) for optimizer in optimizers]
-
     for epoch in range(warmup_epochs):
         current_lr = initial_lr + (desired_lr-initial_lr)*(epoch/warmup_epochs)
         for k in range(n_workers):
@@ -91,6 +88,9 @@ def train_classifier(model,
 
                 loss.backward()
                 optimizers[k].step()
+
+    if scheduler:
+        schedulers = [torch.optim.lr_scheduler.StepLR(optimizer, step_size=10) for optimizer in optimizers]
 
     for epoch in range(epochs):
         for k in range(n_workers):

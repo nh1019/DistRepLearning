@@ -98,9 +98,6 @@ def train_AE(mode: str,
         optim = torch.optim.SGD(params_to_optimize, lr=initial_lr)
     else:
         raise ValueError('Please choose an implemented optimizer.')
-    
-    if scheduler:
-        scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optim, patience=3, verbose=True)
 
     encoder.train()
     decoder.train()
@@ -119,6 +116,9 @@ def train_AE(mode: str,
             loss = criterion(decoded, features)
             loss.backward()
             optim.step()
+
+    if scheduler:
+        scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optim, patience=5, factor=0.5, verbose=True)
 
     for epoch in range(epochs):
         curr_loss = []

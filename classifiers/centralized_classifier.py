@@ -58,9 +58,6 @@ def train_classifier(model,
     else:
         raise ValueError('Please choose an implemented optimizer.')
 
-    if scheduler:
-        sched = torch.optim.lr_scheduler.StepLR(optimizer, step_size=10)
-
     criterion = nn.CrossEntropyLoss()
 
     encoder.eval()
@@ -80,6 +77,9 @@ def train_classifier(model,
 
             loss.backward()
             optim.step()
+
+    if scheduler:
+        sched = torch.optim.lr_scheduler.StepLR(optim, step_size=10)
 
     classifier_accuracies = []
     classifier_losses = []
