@@ -98,7 +98,7 @@ def train_classifier(model,
             correct = 0
             curr_loss = []
             trainloader = trainloaders[k]
-            for batch_idx, (features, labels) in tqdm(enumerate(trainloader)):
+            for batch_idx, (features, labels) in enumerate(trainloader):
                 features, labels = features.to(device), labels.to(device)
 
                 optimizers[k].zero_grad()
