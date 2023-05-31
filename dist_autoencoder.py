@@ -123,7 +123,7 @@ def train_AE(mode: str,
             trainloader = trainloaders[k]
             for param_group in optimizers[k].param_groups:
                 param_group['lr'] = current_lr
-            for batch_idx, (features, _) in tqdm(enumerate(trainloader)):
+            for batch_idx, (features, _) in enumerate(trainloader):
                 features = features.to(device)
 
                 optimizers[k].zero_grad()
@@ -153,17 +153,18 @@ def train_AE(mode: str,
                 loss.backward()
                 optimizers[k].step()
 
-                if scheduler:
-                    schedulers[k].step(loss)
-
                 if batch_idx%len(trainloader)==len(trainloader)-1:
                     avg_train_loss = np.mean(curr_loss)
                     print(f'In epoch {epoch} for worker {k}, average training loss is {avg_train_loss}.')
                     worker_losses[k].append(avg_train_loss)
 
-        '''
+        
         #check whether to stop early 
         curr_average = np.mean([worker_losses[k][epoch] for k in worker_losses.keys()])
+        if scheduler:
+            for k in range(n_workers):
+                schedulers[k].step(curr_average)
+        '''
         if es.early_stop(curr_average):
             print(f'Stopped training autoencoder after epoch {epoch}.')
             break

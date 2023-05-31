@@ -78,7 +78,7 @@ def train_classifier(model,
             trainloader = trainloaders[k]
             for param_group in optimizers[k].param_groups:
                 param_group['lr'] = current_lr
-            for batch_idx, (features, labels) in tqdm(enumerate(trainloader)):
+            for batch_idx, (features, labels) in enumerate(trainloader):
                 features, labels = features.to(device), labels.to(device)
 
                 optimizers[k].zero_grad()
@@ -110,9 +110,6 @@ def train_classifier(model,
                 loss.backward()
                 optimizers[k].step()
 
-                if scheduler:
-                    schedulers[k].step()
-
                 #check prediction accuracy
                 _, predicted = torch.max(classifier_output.data, 1)
                 total += labels.size(0)
@@ -125,8 +122,12 @@ def train_classifier(model,
                     classifier_losses[k].append(avg_train_loss)
                     classifier_accuracies[k].append(avg_train_acc)
         
-        '''
+        
         curr_average = np.mean([classifier_losses[k][epoch] for k in classifier_losses.keys()])
+        if scheduler:
+            for k in range(n_workers):
+                schedulers[k].step(curr_average)
+        '''
         if es.early_stop(curr_average):
             print(f'Stopped training classifier after epoch {epoch}.')
             break
