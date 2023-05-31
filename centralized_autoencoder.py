@@ -140,7 +140,7 @@ def train_AE(mode: str,
                 epoch_losses.append(avg_train_loss)
 
         if scheduler:
-                sched.step()
+                sched.step(avg_train_loss)
 
     '''
     #check whether to stop early 
