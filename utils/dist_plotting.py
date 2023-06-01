@@ -83,6 +83,7 @@ tsne plotting taken from https://medium.com/analytics-vidhya/understanding-simcl
 '''
 
 def plot_vecs_n_labels(v, dataset, labels, fname):
+    plt.clf()
     plt.axis('off')
     sns.set_style('darkgrid')
     sns.scatterplot(x=v[:,0], y=v[:,1], hue=labels, legend='full', palette=sns.color_palette('bright', 10))
