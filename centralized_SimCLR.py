@@ -105,6 +105,7 @@ def train_simCLR(mode: str,
         for param_group in optim.param_groups:
             param_group['lr'] = current_lr
         for batch_idx, (images, _) in tqdm(enumerate(trainloader)):
+            images = torch.cat(images, dim=0)
             images = images.to(device)
 
             optim.zero_grad()
