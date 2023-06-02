@@ -31,13 +31,20 @@ def main(args):
     save_accuracy(test_accuracy, args.output)
 
 
-def train_EC(mode: str, dataset: str, batch_size: int, epochs: int, encoded_dim: int, lr: float=1e-3, device: str='cuda:0', n_workers: int=5):
+def train_EC(mode: str, 
+             dataset: str, 
+             batch_size: int, 
+             epochs: int, 
+             encoded_dim: int, 
+             lr: float=1e-3, 
+             device: str='cuda:0'):
+    
     train_transform = transforms.Compose([
             transforms.RandomHorizontalFlip(p=0.3),
             transforms.ToTensor()
         ])
 
-    es = EarlyStopper(min_delta=0.5)
+    #es = EarlyStopper(min_delta=0.5)
 
     if dataset=='MNIST':
         channels = 1
@@ -53,10 +60,14 @@ def train_EC(mode: str, dataset: str, batch_size: int, epochs: int, encoded_dim:
     params_to_optimize = [{'params': encoder.parameters()}, 
                           {'params': classifier.parameters()}]
     
-    optimizer = torch.optim.Adam(params_to_optimize, lr=lr)
+    optimizer = torch.optim.AdamW(params_to_optimize, lr=lr)
+    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.8)
 
     classifier_losses = []
     classifier_accuracies = []
+
+    encoder.train()
+    classifier.train()
 
     for epoch in range(epochs):
         total = 0
@@ -85,9 +96,13 @@ def train_EC(mode: str, dataset: str, batch_size: int, epochs: int, encoded_dim:
                 classifier_losses.append(avg_train_loss)
                 classifier_accuracies.append(avg_train_acc)
 
+        scheduler.step()
+
+        '''
         if es.early_stop(avg_train_loss):
             print(f'Stopped training model after epoch {epoch}.')
             break
+        '''
 
     return encoder, classifier, encoded_dim, classifier_losses, classifier_accuracies
 

@@ -43,7 +43,7 @@ def train_EC(encoder_mode: str, classifier_mode: str, dataset: str, batch_size: 
             transforms.ToTensor()
         ])
 
-    es = EarlyStopper(min_delta=0.5)
+    #es = EarlyStopper(min_delta=0.5)
 
     if dataset=='MNIST':
         channels = 1
@@ -65,7 +65,8 @@ def train_EC(encoder_mode: str, classifier_mode: str, dataset: str, batch_size: 
             {'params': classifiers[i].parameters()}
         ])
     
-    optimizers = [torch.optim.Adam(params, lr=lr) for params in params_to_optimize]
+    optimizers = [torch.optim.AdamW(params, lr=lr) for params in params_to_optimize]
+    schedulers = [torch.optim.lr_scheduler.StepLR(optimizer, step_size=10, verbose=True, gamma=0.8) for optimizer in optimizers]
 
     for i in range(n_workers):
         encoders[i].train()
@@ -106,15 +107,19 @@ def train_EC(encoder_mode: str, classifier_mode: str, dataset: str, batch_size: 
                     classifier_losses[k].append(avg_train_loss)
                     classifier_accuracies[k].append(avg_train_acc)
 
+        '''
         curr_average = np.mean([classifier_losses[k][epoch] for k in classifier_losses.keys()])
         if es.early_stop(curr_average):
             print(f'Stopped training model after epoch {epoch}.')
             break
-            
+        '''
+        for i in range(n_workers):
+            schedulers[i].step()
+
         if encoder_mode=='collaborative':
             encoders = aggregate(n_workers, encoders, adj_matrix)
         
-        if classifier_mode=='collaborative':
+        if classifier_mode=='collaborative' and epoch!=epochs-1:
             classifiers = aggregate(n_workers, classifiers, adj_matrix)
 
 
