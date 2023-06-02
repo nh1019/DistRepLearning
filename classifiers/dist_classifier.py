@@ -166,13 +166,9 @@ def test_classifier(model,
         #save examples
         for j in range(n_workers):
             img = test_datasets[j][0][0].cpu()
-            print(img)
             encoded_img = encoders[j](img.unsqueeze(0).to(device)).detach().cpu().reshape(1, 1, -1)
-            print(encoded_img.shape)
-            print(encoded_img)
 
             img = (img*255).to(torch.uint8)
-            print(img)
             encoded_img = (encoded_img*255).to(torch.uint8)
 
             tvio.write_png(img, f'./results/original_{j}.png')

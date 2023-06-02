@@ -97,6 +97,37 @@ class InfoNCELoss(nn.Module):
         return logits, labels
 
 
+class NTXEntLoss(nn.Module):
+    def __init__(self, device, temperature=0.7):
+        super(NTXEntLoss, self).__init__()
+
+        self.device = device
+        self.temperature = temperature
+
+    def forward(self, X1, X2):
+        X1_norm = torch.norm(X1, dim=1).reshape(-1, 1)
+        X1_hat = torch.div(X1, X1_norm)
+
+        X2_norm = torch.norm(X2, dim=1).reshape(-1, 1)
+        X2_hat = torch.div(X2, X2_norm)
+
+        X1_hat_X2_hat = torch.cat([X1_hat, X2_hat], dim=0)
+        X2_hat_X1_hat = torch.cat([X2_hat, X1_hat], dim=0)
+
+        sim_matrix = torch.div(torch.matmul(X1_hat_X2_hat, X1_hat_X2_hat.T), self.temperature)
+        exp_sim = torch.exp(sim_matrix)
+
+        exp_sim_diag = torch.diag(exp_sim)
+
+        nums = torch.exp(torch.div(nn.CosineSimilarity()(X1_hat_X2_hat, X2_hat_X1_hat), self.temperature))
+        dens = torch.sum(exp_sim, dim=1) - exp_sim_diag
+
+        res = torch.div(nums, dens)
+
+        return torch.mean(-torch.log(res))
+
+
+
     
         
 
