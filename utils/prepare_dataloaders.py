@@ -45,8 +45,7 @@ def prepare_MNIST(mode: str, batch_size: int, train_transform=None, train=True):
         
 def prepare_CIFAR(mode: str, batch_size: int, train_transform=None, train=True):
     test_transform = transforms.Compose([transforms.ToTensor()])
-    #worker_classes = [[0, 1], [2, 3], [4, 5], [6, 7], [8, 9]]]
-    worker_classes = [[3, 5], [5, 7], [6, 2], [0, 8], [1, 9]]
+    worker_classes = [[0, 1], [2, 3], [4, 5], [6, 7], [8, 9]]
 
     if train:
         train_dataset = datasets.CIFAR10(root='./data', train=True, transform=train_transform, download=True)
