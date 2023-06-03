@@ -16,6 +16,8 @@ from classifiers.dist_classifier import test_classifier
 
 def main(args):
     save_config(args)
+    torch.manual_seed(2)
+    np.random.seed(2)
 
     #generate graph of worker nodes
     A = generate_graph(5, args.topology)

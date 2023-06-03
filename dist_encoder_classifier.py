@@ -16,6 +16,8 @@ from classifiers.dist_classifier import test_classifier
 
 def main(args):
     save_config(args)
+    torch.manual_seed(2)
+    np.random.seed(2)
 
     #generate graph of worker nodes
     A = generate_graph(5, args.topology)
@@ -32,7 +34,10 @@ def main(args):
     plot_losses(classifier_losses, f'{args.model_training}_Encoder_Classifier_Losses', args.output)
     plot_accuracies(classifier_accuracies, f'{args.model_training}_Encoder_Classifier_Accuracies', args.output)
 
-    test_accuracies = test_classifier(encoders, classifiers, args.dataset, args.testing)
+    test_accuracies = test_classifier(encoders, 
+                                      classifiers, 
+                                      args.dataset, 
+                                      args.testing)
 
     save_accuracies(test_accuracies, args.output)
 

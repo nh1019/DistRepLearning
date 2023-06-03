@@ -161,7 +161,7 @@ def test_classifier(model,
 
     if dataset=='MNIST':
         testloaders = prepare_MNIST(mode, batch_size=8, train=False)
-    elif dataset=='CIFAR':
+    elif dataset=='CIFAR' and mode=='local':
         testloaders, test_datasets = prepare_CIFAR(mode, batch_size=8, train=False)
         #save examples
         for j in range(n_workers):
@@ -173,6 +173,8 @@ def test_classifier(model,
 
             tvio.write_png(img, f'./results/original_{j}.png')
             tvio.write_png(encoded_img, f'./results/encoded_{j}.png')
+    else:
+        testloaders = prepare_CIFAR(mode, batch_size=8, train=False)
 
 
     worker_accuracies = {0: [], 1: [], 2: [], 3: [], 4: []}
