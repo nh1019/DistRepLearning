@@ -90,7 +90,8 @@ def train_EC(encoder_mode: str, classifier_mode: str, dataset: str, batch_size: 
             for batch_idx, data in tqdm(enumerate(trainloader)):
                 features, labels = data
                 #convert labels to 0s and 1s for binary classification
-                labels = F.one_hot(labels, num_classes=2).float()
+                labels = torch.where(labels==2*k, torch.tensor(0), labels)
+                labels = torch.where(labels==2*k+1, torch.tensor(1), labels)
                 features, labels = features.to(device), labels.to(device)
 
                 optimizers[k].zero_grad()
