@@ -239,8 +239,7 @@ def test_binary_classifier(model,
         testloader = testloaders[k]
         with torch.no_grad():
             for features, labels in testloader:
-                labels = torch.where(labels==2*k, torch.tensor(0), labels)
-                labels = torch.where(labels==2*k+1, torch.tensor(1), labels)
+                labels = torch.where(labels==2*k, torch.tensor(0), torch.tensor(1))
                 features, labels = features.to(device), labels.to(device)
 
                 reps = encoders[k](features)
@@ -248,7 +247,7 @@ def test_binary_classifier(model,
                 
                 _, predicted = torch.max(outputs.data, 1)
                 total += labels.size(0)
-                correct += (predicted==torch.argmax(labels, dim=1)).sum().item()
+                correct += (predicted==labels).sum().item()
 
             worker_accuracies[k] = (correct/total)*100
 
