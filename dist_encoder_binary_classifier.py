@@ -92,11 +92,13 @@ def train_EC(encoder_mode: str, classifier_mode: str, dataset: str, batch_size: 
                 #convert labels to 0s and 1s for binary classification
                 labels = torch.where(labels==2*k, torch.tensor(0), torch.tensor(1))
                 features, labels = features.to(device), labels.to(device)
+                print(labels)
 
                 optimizers[k].zero_grad()
                 reps = encoders[k](features)
                 classifier_output = activation(classifiers[k](reps))
-                loss = criterion(classifier_output.view(-1), labels.float())
+                print(classifier_output)
+                loss = criterion(classifier_output.squeeze(), labels.float())
                 curr_loss.append(loss.item())
                 loss.backward()
                 optimizers[k].step()
