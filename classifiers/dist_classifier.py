@@ -5,6 +5,7 @@ from tqdm import tqdm
 import numpy as np
 import torchvision.io as tvio
 from sklearn.metrics import confusion_matrix
+import torch.nn.functional as F
 
 from utils.earlystopping import EarlyStopper
 from models.linear_classifier import LinearClassifier
@@ -206,3 +207,49 @@ def test_classifier(model,
         worker_accuracies[k] = (correct/total)*100
 
     return worker_accuracies, confusion_matrices
+
+def test_binary_classifier(model,
+                           classifier,
+                           dataset: str,
+                           mode: str,
+                           device: str='cuda:0',
+                           n_workers: int=5):
+    
+    classifiers = classifier
+    encoders = model
+
+    for i in range(n_workers):
+        encoders[i].eval()
+        classifiers[i].eval()
+
+    plot_tsne(model, dataset)
+
+    activation = nn.Sigmoid()
+
+    if dataset=='MNIST':
+        testloaders = prepare_MNIST(mode, batch_size=8, train=False)
+    else:
+        testloaders, _ = prepare_CIFAR(mode, batch_size=8, train=False)
+    
+    worker_accuracies = {0: [], 1: [], 2: [], 3: [], 4: []}
+
+    for k in range(n_workers):
+        total = 0
+        correct = 0
+        testloader = testloaders[k]
+        with torch.no_grad():
+            for features, labels in testloader:
+                labels = F.one_hot(labels, num_classes=2).float()
+                features, labels = features.to(device), labels.to(device)
+
+                reps = encoders[k](features)
+                outputs = activation(classifiers[k](reps))
+                
+                _, predicted = torch.max(outputs.data, 1)
+                total += labels.size(0)
+                correct += (predicted==labels).sum().item()
+
+            worker_accuracies[k] = (correct/total)*100
+
+    return worker_accuracies
+
