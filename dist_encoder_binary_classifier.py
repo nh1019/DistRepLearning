@@ -1,6 +1,7 @@
 import argparse
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 import numpy as np
 from tqdm import tqdm
 from torchvision.transforms import transforms
@@ -55,7 +56,7 @@ def train_EC(encoder_mode: str, classifier_mode: str, dataset: str, batch_size: 
         trainloaders = prepare_CIFAR(encoder_mode, batch_size, train_transform)
 
     encoders = [Encoder(channels, encoded_dim).to(device) for _ in range(n_workers)]
-    classifiers = [LinearClassifier(encoded_dim, 10).to(device) for _ in range(n_workers)]
+    classifiers = [LinearClassifier(encoded_dim, 2).to(device) for _ in range(n_workers)]
     criterion = nn.BCELoss()
     activation = nn.Sigmoid()
 
@@ -86,8 +87,7 @@ def train_EC(encoder_mode: str, classifier_mode: str, dataset: str, batch_size: 
             for batch_idx, data in tqdm(enumerate(trainloader)):
                 features, labels = data
                 #convert labels to 0s and 1s for binary classification
-                labels = torch.where(labels==2*k, torch.tensor(0), labels)
-                labels = torch.where(labels==2*k+1, torch.tensor(1), labels)
+                labels = F.one_hot(labels, num_classes=2).float()
                 features, labels = features.to(device), labels.to(device)
 
                 optimizers[k].zero_grad()
