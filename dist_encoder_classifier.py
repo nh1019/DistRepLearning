@@ -11,7 +11,7 @@ from utils.prepare_dataloaders import prepare_MNIST, prepare_CIFAR
 from utils.aggregate import aggregate, generate_graph
 from utils.earlystopping import EarlyStopper
 from utils.save_config import save_config
-from utils.dist_plotting import plot_losses, plot_accuracies, save_accuracies
+from utils.dist_plotting import *
 from classifiers.dist_classifier import test_classifier
 
 def main(args):
@@ -34,10 +34,13 @@ def main(args):
     plot_losses(classifier_losses, f'{args.model_training}_Encoder_Classifier_Losses', args.output)
     plot_accuracies(classifier_accuracies, f'{args.model_training}_Encoder_Classifier_Accuracies', args.output)
 
-    test_accuracies = test_classifier(encoders, 
+    test_accuracies, confusion_matrices = test_classifier(encoders, 
                                       classifiers, 
                                       args.dataset, 
                                       args.testing)
+
+    for i, cm in enumerate(confusion_matrices):
+        plot_confusion_matrix(cm, args.dataset, args.output, i)
 
     save_accuracies(test_accuracies, args.output)
 
