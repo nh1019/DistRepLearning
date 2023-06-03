@@ -246,6 +246,7 @@ def test_binary_classifier(model,
                 outputs = activation(classifiers[k](reps))
                 
                 _, predicted = torch.max(outputs.data, 1)
+                predicted = torch.argmax(predicted, dim=1)
                 total += labels.size(0)
                 correct += (predicted==labels).sum().item()
 

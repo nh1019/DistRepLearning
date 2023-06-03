@@ -96,15 +96,14 @@ def train_EC(encoder_mode: str, classifier_mode: str, dataset: str, batch_size: 
                 optimizers[k].zero_grad()
                 reps = encoders[k](features)
                 classifier_output = activation(classifiers[k](reps))
-                loss = criterion(classifier_output.squeeze(), labels.float())
+                loss = criterion(classifier_output, labels.float())
                 curr_loss.append(loss.item())
                 loss.backward()
                 optimizers[k].step()
 
                 _, predicted = torch.max(classifier_output.data, 1)
+                predicted = torch.argmax(predicted, dim=1)
                 total += labels.size(0)
-                print(predicted)
-                print(labels)
                 correct += (predicted==labels).sum().item()
 
                 if batch_idx%len(trainloader)==len(trainloader)-1:
