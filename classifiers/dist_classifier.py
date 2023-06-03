@@ -247,7 +247,7 @@ def test_binary_classifier(model,
                 
                 _, predicted = torch.max(outputs.data, 1)
                 total += labels.size(0)
-                correct += (predicted==labels).sum().item()
+                correct += (predicted==torch.argmax(labels, dim=1)).sum().item()
 
             worker_accuracies[k] = (correct/total)*100
 

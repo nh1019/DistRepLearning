@@ -103,7 +103,7 @@ def train_EC(encoder_mode: str, classifier_mode: str, dataset: str, batch_size: 
 
                 _, predicted = torch.max(classifier_output.data, 1)
                 total += labels.size(0)
-                correct += (predicted==labels).sum().item()
+                correct += (predicted==torch.argmax(labels,dim=1)).sum().item()
 
                 if batch_idx%len(trainloader)==len(trainloader)-1:
                     avg_train_loss = np.mean(curr_loss)
