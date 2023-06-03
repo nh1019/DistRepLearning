@@ -170,7 +170,7 @@ def train_AE(mode: str,
             break
         '''
         #aggregate weights at the end of each epoch
-        if mode=='collaborative':
+        if mode=='collaborative' and epoch!=epochs-1:
             encoders = aggregate(n_workers, encoders, adj_matrix)
             decoders = aggregate(n_workers, decoders, adj_matrix)
 
