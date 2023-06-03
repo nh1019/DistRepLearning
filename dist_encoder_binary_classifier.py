@@ -103,6 +103,9 @@ def train_EC(encoder_mode: str, classifier_mode: str, dataset: str, batch_size: 
 
                 _, predicted = torch.max(classifier_output.data, 1)
                 print(predicted)
+                print(predicted.shape)
+                print(labels)
+                print(labels.shape)
                 predicted = torch.argmax(predicted, dim=1)
                 total += labels.size(0)
                 correct += (predicted==labels).sum().item()
