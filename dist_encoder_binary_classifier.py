@@ -91,6 +91,12 @@ def train_EC(encoder_mode: str, classifier_mode: str, dataset: str, batch_size: 
                 features, labels = data
                 #convert labels to 0s and 1s for binary classification
                 labels = F.one_hot(torch.where(labels==2*k, torch.tensor(0), torch.tensor(1)))
+
+                #check the case where the whole batch is equal to 2*k
+                if labels.shape[1]==1:
+                    #pad zeros
+                    zeros_col = torch.zeros(labels.size(0), 1)
+                    labels = torch.cat((labels, zeros_col), dim=1)
                 features, labels = features.to(device), labels.to(device)
 
                 optimizers[k].zero_grad()
