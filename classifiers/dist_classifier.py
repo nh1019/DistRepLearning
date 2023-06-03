@@ -239,7 +239,7 @@ def test_binary_classifier(model,
         testloader = testloaders[k]
         with torch.no_grad():
             for features, labels in testloader:
-                labels = torch.where(labels==2*k, torch.tensor(0), torch.tensor(1))
+                labels = F.one_hot(torch.where(labels==2*k, torch.tensor(0), torch.tensor(1)))
                 features, labels = features.to(device), labels.to(device)
 
                 reps = encoders[k](features)

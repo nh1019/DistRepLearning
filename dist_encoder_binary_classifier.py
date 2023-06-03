@@ -90,14 +90,12 @@ def train_EC(encoder_mode: str, classifier_mode: str, dataset: str, batch_size: 
             for batch_idx, data in tqdm(enumerate(trainloader)):
                 features, labels = data
                 #convert labels to 0s and 1s for binary classification
-                labels = torch.where(labels==2*k, torch.tensor(0), torch.tensor(1))
+                labels = F.one_hot(torch.where(labels==2*k, torch.tensor(0), torch.tensor(1)))
                 features, labels = features.to(device), labels.to(device)
-                print(labels)
 
                 optimizers[k].zero_grad()
                 reps = encoders[k](features)
                 classifier_output = activation(classifiers[k](reps))
-                print(classifier_output)
                 loss = criterion(classifier_output.squeeze(), labels.float())
                 curr_loss.append(loss.item())
                 loss.backward()
