@@ -78,7 +78,7 @@ def train_simCLR(mode: str,
         channels = 3
         trainloader = prepare_CIFAR(mode, batch_size, TwoCropsTransform(train_transform))
 
-    encoder = Encoder(channels, encoded_dim).to(device)
+    #encoder = Encoder(channels, encoded_dim).to(device)
     model = SimCLR().to(device)
 
     if warmup_epochs:
@@ -95,7 +95,7 @@ def train_simCLR(mode: str,
         optim = torch.optim.SGD(model.parameters(), lr=initial_lr)
 
     
-    custom_loss = InfoNCELoss(device, batch_size)
+    custom_loss = InfoNCELoss(device, batch_size).to(device)
     criterion = nn.CrossEntropyLoss()
 
     model.train()
@@ -147,7 +147,7 @@ def train_simCLR(mode: str,
             print(f'Stopped training autoencoder after epoch {epoch}.')
             break
 
-    return encoder, epoch_losses
+    return model, epoch_losses
 
 
 if __name__=='__main__':
