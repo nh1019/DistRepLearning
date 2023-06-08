@@ -18,7 +18,6 @@ def main(args):
 
     encoders, losses = train_simCLR(
         mode=args.model_training,
-        dataset=args.dataset,
         batch_size=256,
         epochs=args.model_epochs,
         optimizer=args.optimizer,
@@ -51,7 +50,6 @@ def main(args):
     save_accuracy(test_accuracies, args.output)
 
 def train_simCLR(mode: str, 
-                 dataset: str, 
                  epochs: int, 
                  batch_size: int,  
                  optimizer: str,
@@ -71,15 +69,11 @@ def train_simCLR(mode: str,
 
     es = EarlyStopper(min_delta=0.2)
     epoch_losses = []
-    
-    if dataset=='MNIST':
-        trainloader = prepare_MNIST(mode, batch_size, TwoCropsTransform(train_transform))
-    elif dataset=='CIFAR':
-        channels = 3
-        trainloader = prepare_CIFAR(mode, batch_size, TwoCropsTransform(train_transform))
+
+    trainloader = prepare_CIFAR(mode, batch_size, TwoCropsTransform(train_transform))
 
     #encoder = Encoder(channels, encoded_dim).to(device)
-    model = SimCLR().to(device)
+    model = SimCLR(out_dim=encoded_dim).to(device)
 
     if warmup_epochs:
         desired_lr = lr
