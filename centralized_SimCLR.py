@@ -56,7 +56,7 @@ def train_simCLR(mode: str,
                  warmup_epochs: int,
                  scheduler: bool,
                  encoded_dim: int=128,
-                 lr: float=1e-3, 
+                 lr: float=3e-3, 
                  device: str='cuda:0'):
     
     train_transform = transforms.Compose([
@@ -82,7 +82,7 @@ def train_simCLR(mode: str,
         initial_lr = lr
 
     if optimizer=='Adam':
-        optim = torch.optim.Adam(model.parameters(), lr=initial_lr)
+        optim = torch.optim.Adam(model.parameters(), lr=initial_lr, weight_decay=1e-4)
     elif optimizer=='AdamW':
         optim = torch.optim.AdamW(model.parameters(), lr=initial_lr)
     elif optimizer=='SGD':
@@ -111,7 +111,7 @@ def train_simCLR(mode: str,
             optim.step()
 
     if scheduler:
-        sched = torch.optim.lr_scheduler.ReduceLROnPlateau(optim, patience=5, factor=0.5, verbose=True)
+        sched = torch.optim.lr_scheduler.CosineAnnealingLR(optim, T_max=len(trainloader), eta_min=0, last_epoch=-1)
 
     for epoch in range(epochs):
         curr_loss = []
