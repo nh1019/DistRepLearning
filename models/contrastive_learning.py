@@ -29,8 +29,6 @@ class SimSiam(nn.Module):
             nn.ReLU(inplace=True),
             self.encoder.fc,
             nn.BatchNorm1d(dim, affine=False))
-        
-        self.encoder.fc[6].bias.requires_grad = False
 
         self.predictor = nn.Sequential(
             nn.Linear(dim, pred_dim, bias=False),
