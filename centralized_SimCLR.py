@@ -15,6 +15,8 @@ from classifiers.centralized_classifier import *
 
 def main(args):
     save_config(args)
+    torch.manual_seed(0)
+    np.random.seed(2)
 
     encoders, losses = train_simCLR(
         mode=args.model_training,
