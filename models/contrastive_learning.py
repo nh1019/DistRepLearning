@@ -15,10 +15,22 @@ class TwoCropsTransform:
         return [self.transform(x), self.transform(x)]
 
 class SimSiam(nn.Module):
-    def __init__(self, encoder, dim=128, pred_dim=32):
+    def __init__(self, dim=128, pred_dim=10):
         super(SimSiam, self).__init__()
 
-        self.encoder = encoder
+        self.encoder = models.resnet18(weights=None, num_classes=dim)
+        prev_dim = self.encoder.fc.weight.shape[1]
+
+        self.encoder.fc = nn.Sequential(
+            nn.Linear(prev_dim, prev_dim, bias=False),
+            nn.BatchNorm1d(prev_dim),
+            nn.Linear(prev_dim, prev_dim, bias=False),
+            nn.BatchNorm1d(prev_dim),
+            nn.ReLU(inplace=True),
+            self.encoder.fc,
+            nn.BatchNorm1d(dim, affine=False))
+        
+        self.encoder.fc[6].bias.requires_grad = False
 
         self.predictor = nn.Sequential(
             nn.Linear(dim, pred_dim, bias=False),

@@ -47,7 +47,12 @@ def main(args):
     save_accuracy(test_accuracies, args.output)
 
 
-def train_SimSiam(mode: str, dataset: str, epochs: int, batch_size: int, encoded_dim: int=128, lr: float=1e-3, device: str='cuda:0'):
+def train_SimSiam(mode: str, 
+                  epochs: int, 
+                  batch_size: int, 
+                  encoded_dim: int=128, 
+                  lr: float=1e-3, 
+                  device: str='cuda:0'):
     train_transform = transforms.Compose([
         transforms.RandomApply([transforms.ColorJitter(0.4, 0.4, 0.4, 0.1)], p=0.8),
         transforms.RandomGrayscale(p=0.2),
@@ -58,19 +63,12 @@ def train_SimSiam(mode: str, dataset: str, epochs: int, batch_size: int, encoded
     
     es = EarlyStopper(min_delta=0.5)
     epoch_losses = []
-    
-    if dataset=='MNIST':
-        channels = 1
-        trainloader = prepare_MNIST(mode, batch_size, TwoCropsTransform(train_transform))
-    elif dataset=='CIFAR':
-        channels = 3
-        trainloader = prepare_CIFAR(mode, batch_size, TwoCropsTransform(train_transform))
 
-    encoder = Encoder(channels, encoded_dim).to(device)
-    model = SimSiam(encoder, dim=encoded_dim, pred_dim=encoded_dim//4).to(device)
+    trainloader = prepare_CIFAR(mode, batch_size, TwoCropsTransform(train_transform))
+    model = SimSiam(dim=encoded_dim).to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=lr) 
-    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, patience=3)
-    criterion = nn.CosineSimilarity(dim=1)
+    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=len(trainloader), eta_min=0, last_epoch=-1)
+    criterion = nn.CosineSimilarity(dim=1).to(device)
 
     model.train()
 
@@ -80,14 +78,13 @@ def train_SimSiam(mode: str, dataset: str, epochs: int, batch_size: int, encoded
             images[0] = images[0].to(device)
             images[1] = images[1].to(device)
 
+            optimizer.zero_grad()
             p1, p2, z1, z2 = model(images[0], images[1])
             loss = -0.5*(criterion(p1, z2).mean() + criterion(p2, z1).mean())
             curr_loss.append(loss.item())
 
-            optimizer.zero_grad()
             loss.backward()
             optimizer.step()
-            scheduler.step(loss)
 
             if batch_idx%len(trainloader)==len(trainloader)-1:
                 avg_train_loss = np.mean(curr_loss)
@@ -97,6 +94,8 @@ def train_SimSiam(mode: str, dataset: str, epochs: int, batch_size: int, encoded
         if es.early_stop(avg_train_loss):
             print(f'Stopped training autoencoder after epoch {epoch}.')
             break
+
+        scheduler.step()
 
     return model, epoch_losses
 
