@@ -8,7 +8,7 @@ import numpy as np
 from models.contrastive_learning import SimSiam, TwoCropsTransform
 from models.autoencoder import Encoder
 from utils.earlystopping import EarlyStopper
-from utils.prepare_dataloaders import prepare_MNIST, prepare_CIFAR
+from utils.prepare_dataloaders import prepare_CIFAR
 from utils.centralized_plotting import *
 from utils.save_config import save_config
 from classifiers.centralized_classifier import *
@@ -51,7 +51,7 @@ def train_SimSiam(mode: str,
                   epochs: int, 
                   batch_size: int, 
                   encoded_dim: int=128, 
-                  lr: float=1e-3, 
+                  lr: float=.05, 
                   device: str='cuda:0'):
     train_transform = transforms.Compose([
         transforms.RandomApply([transforms.ColorJitter(0.4, 0.4, 0.4, 0.1)], p=0.8),
