@@ -100,6 +100,8 @@ class InfoNCELoss(nn.Module):
 
         logits = torch.cat([pos, neg], dim=1)
         labels = torch.zeros(logits.shape[0], dtype=torch.long).to(self.device)
+        print(logits)
+        print(labels)
 
         logits /= self.temperature
 
