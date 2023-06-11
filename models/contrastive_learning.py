@@ -67,7 +67,7 @@ class InfoNCELoss(nn.Module):
 
     def forward(self, features):
         labels = torch.cat([torch.arange(self.batch_size) for _ in range(self.n_views)], dim=0)
-        labels = (labels.unsqueeze(0)==labels.unsqueeze(1)).long()
+        labels = (labels.unsqueeze(0)==labels.unsqueeze(1)).float()
         labels = labels.to(self.device)
 
         features = F.normalize(features, dim=1)
