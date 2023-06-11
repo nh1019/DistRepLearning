@@ -121,7 +121,7 @@ def train_simCLR(mode: str,
             optim.step()
 
     if scheduler:
-        sched = torch.optim.lr_scheduler.CosineAnnealingLR(optim, T_max=len(trainloader), eta_min=0, last_epoch=-1)
+        sched = torch.optim.lr_scheduler.CosineAnnealingLR(optim, T_max=200, eta_min=0, last_epoch=-1, verbose=True)
 
     for epoch in range(epochs):
         curr_loss = []
@@ -130,12 +130,12 @@ def train_simCLR(mode: str,
             images = torch.cat(images, dim=0)
             images = images.to(device)
 
-            optim.zero_grad()
             features = model(images)
             logits, labels = custom_loss(features)
             loss = criterion(logits, labels)
             curr_loss.append(loss.item())
 
+            optim.zero_grad()
             loss.backward()
             optim.step()
 
