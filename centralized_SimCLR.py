@@ -60,7 +60,7 @@ def train_simCLR(mode: str,
                  encoded_dim: int=128,
                  lr: float=3e-3, 
                  device: str='cuda:0'):
-    
+    '''
     train_transform = transforms.Compose([
         transforms.RandomApply([transforms.ColorJitter(0.4, 0.4, 0.4, 0.1)], p=0.8),
         transforms.RandomGrayscale(p=0.2),
@@ -68,7 +68,15 @@ def train_simCLR(mode: str,
         transforms.RandomHorizontalFlip(),
         transforms.ToTensor()
     ])
-
+    '''
+    train_transform = transforms.Compose([
+        transforms.RandomResizedCrop(size=32),
+        transforms.RandomHorizontalFlip(),
+        transforms.RandomApply([transforms.ColorJitter(.8, .8, .8, .2)], p=.8),
+        transforms.RandomGrayscale(p=.2),
+        transforms.GaussianBlur(kernel_size=3),
+        transforms.ToTensor()
+    ])
     es = EarlyStopper(min_delta=0.2)
     epoch_losses = []
 
