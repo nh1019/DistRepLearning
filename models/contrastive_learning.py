@@ -15,7 +15,7 @@ class TwoCropsTransform:
         return [self.transform(x), self.transform(x)]
 
 class SimSiam(nn.Module):
-    def __init__(self, dim=128, pred_dim=10):
+    def __init__(self, dim=512, pred_dim=128):
         super(SimSiam, self).__init__()
 
         self.encoder = models.resnet18(weights=None, num_classes=dim)
