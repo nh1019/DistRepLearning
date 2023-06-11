@@ -40,7 +40,7 @@ class SimCLR(nn.Module):
     def __init__(self, out_dim):
         super(SimCLR, self).__init__()
 
-        self.encoder = models.resnet34(weights=None, num_classes=out_dim)
+        self.encoder = models.resnet18(weights=None, num_classes=out_dim)
 
         #mlp projection head
         self.dim_mlp = self.encoder.fc.in_features

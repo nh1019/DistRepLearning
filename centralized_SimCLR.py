@@ -134,8 +134,8 @@ def train_simCLR(mode: str,
                 print(f'In epoch {epoch}, average training loss is {avg_train_loss}.')
                 epoch_losses.append(avg_train_loss)
 
-        if scheduler:
-            sched.step(avg_train_loss)
+        if scheduler and epoch>=10:
+            sched.step()
 
         if es.early_stop(avg_train_loss):
             print(f'Stopped training autoencoder after epoch {epoch}.')
