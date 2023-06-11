@@ -58,7 +58,7 @@ def train_simCLR(mode: str,
                  warmup_epochs: int,
                  scheduler: bool,
                  encoded_dim: int=128,
-                 lr: float=3e-3, 
+                 lr: float=3e-4, 
                  device: str='cuda:0'):
     '''
     train_transform = transforms.Compose([
