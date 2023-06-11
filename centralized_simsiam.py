@@ -77,11 +77,11 @@ def train_SimSiam(mode: str,
             images[0] = images[0].to(device)
             images[1] = images[1].to(device)
 
-            optimizer.zero_grad()
             p1, p2, z1, z2 = model(images[0], images[1])
             loss = -0.5*(criterion(p1, z2).mean() + criterion(p2, z1).mean())
             curr_loss.append(loss.item())
 
+            optimizer.zero_grad()
             loss.backward()
             optimizer.step()
 
