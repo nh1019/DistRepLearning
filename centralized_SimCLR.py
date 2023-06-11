@@ -90,7 +90,7 @@ def train_simCLR(mode: str,
 
     
     custom_loss = InfoNCELoss(device, batch_size).to(device)
-    criterion = nn.CrossEntropyLoss()
+    criterion = nn.CrossEntropyLoss().to(device)
 
     model.train()
 
