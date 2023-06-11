@@ -45,7 +45,7 @@ class SimCLR(nn.Module):
         #mlp projection head
         self.dim_mlp = self.encoder.fc.in_features
         print(self.dim_mlp)
-        self.encoder.encoder_lin = nn.Sequential(
+        self.encoder.fc = nn.Sequential(
             nn.Linear(self.dim_mlp, self.dim_mlp), 
             nn.ReLU(),
             self.encoder.fc
