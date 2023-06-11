@@ -18,7 +18,6 @@ def main(args):
 
     encoder, losses = train_SimSiam(
         mode=args.model_training,
-        dataset=args.dataset,
         batch_size=256,
         epochs=args.model_epochs,
         encoded_dim=args.encoded_dim)
