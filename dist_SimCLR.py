@@ -79,7 +79,7 @@ def train_simCLR(mode: str,
     trainloaders = prepare_CIFAR(mode, batch_size, TwoCropsTransform(train_transform))
 
     models = [SimCLR(out_dim=encoded_dim).to(device) for _ in range(n_workers)]
-    optimizers = [torch.optim.Adam(model.parameters(), lr=lr) for model in models]
+    optimizers = [torch.optim.Adam(model.parameters(), lr=lr, weight_decay=1e-4) for model in models]
     schedulers = [torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=len(trainloader), eta_min=0, last_epoch=-1, verbose=True) for optimizer in optimizers]
     custom_loss = InfoNCELoss(device, batch_size).to(device)
     criterion = nn.CrossEntropyLoss().to(device)
