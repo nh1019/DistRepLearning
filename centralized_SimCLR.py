@@ -6,9 +6,8 @@ from tqdm import tqdm
 import numpy as np
 
 from models.contrastive_learning import SimCLR, InfoNCELoss, TwoCropsTransform
-from models.autoencoder import Encoder
 from utils.earlystopping import EarlyStopper
-from utils.prepare_dataloaders import prepare_MNIST, prepare_CIFAR
+from utils.prepare_dataloaders import prepare_CIFAR
 from utils.save_config import save_config
 from utils.centralized_plotting import *
 from classifiers.centralized_classifier import *
@@ -82,7 +81,6 @@ def train_simCLR(mode: str,
 
     trainloader = prepare_CIFAR(mode, batch_size, TwoCropsTransform(train_transform))
 
-    #encoder = Encoder(channels, encoded_dim).to(device)
     model = SimCLR(out_dim=encoded_dim).to(device)
 
     if warmup_epochs:
@@ -130,12 +128,12 @@ def train_simCLR(mode: str,
             images = torch.cat(images, dim=0)
             images = images.to(device)
 
+            optim.zero_grad()
             features = model(images)
             logits, labels = custom_loss(features)
             loss = criterion(logits, labels)
             curr_loss.append(loss.item())
 
-            optim.zero_grad()
             loss.backward()
             optim.step()
 

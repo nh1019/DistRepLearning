@@ -41,6 +41,9 @@ def main(args):
         classifier=classifier,
         dataset=args.dataset,
         mode=args.testing,
+        optimizer='Adam',
+        warmup_epochs=0,
+        scheduler=False,
         simsiam=True)
     
     save_accuracy(test_accuracies, args.output)

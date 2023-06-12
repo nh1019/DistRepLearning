@@ -16,12 +16,13 @@ from classifiers.dist_classifier import *
 
 def main(args):
     save_config(args)
+    torch.manual_seed(0)
+    np.random.seed(2)
 
     A = generate_graph(5, args.topology)
 
     encoders, losses = train_simCLR(
         mode=args.model_training,
-        dataset=args.dataset,
         batch_size=256,
         epochs=args.model_epochs,
         encoded_dim=args.encoded_dim,
@@ -35,6 +36,9 @@ def main(args):
         mode=args.classifier_training,
         epochs=args.classifier_epochs,
         batch_size=16,
+        optimizer='Adam',
+        warmup_epochs=0,
+        scheduler=False,
         encoded_dim=args.encoded_dim,
         adj_matrix=A)
     
@@ -49,30 +53,33 @@ def main(args):
     
     save_accuracies(test_accuracies, args.output)
 
-def train_simCLR(mode: str, dataset: str, epochs: int, batch_size: int, adj_matrix, encoded_dim: int=128, lr: float=1e-3, device: str='cuda:0', n_workers: int=5):
+def train_simCLR(mode: str, 
+                 epochs: int, 
+                 batch_size: int, 
+                 adj_matrix, 
+                 encoded_dim: 
+                 int=128, 
+                 lr: float=3e-4, 
+                 device: str='cuda:0', 
+                 n_workers: int=5):
+    
     train_transform = transforms.Compose([
-        transforms.RandomApply([transforms.ColorJitter(0.4, 0.4, 0.4, 0.1)], p=0.8),
-        transforms.RandomGrayscale(p=0.2),
-        transforms.RandomApply([transforms.GaussianBlur(kernel_size=3)], p=0.5),
+        transforms.RandomResizedCrop(size=32),
         transforms.RandomHorizontalFlip(),
+        transforms.RandomApply([transforms.ColorJitter(.8, .8, .8, .2)], p=.8),
+        transforms.RandomGrayscale(p=.2),
+        transforms.GaussianBlur(kernel_size=3),
         transforms.ToTensor()
     ])
 
-    es = EarlyStopper(min_delta=0.5)
     worker_losses = {0: [], 1: [], 2: [], 3: [], 4: []}
     
-    if dataset=='MNIST':
-        channels = 1
-        trainloaders = prepare_MNIST(mode, batch_size, TwoCropsTransform(train_transform))
-    elif dataset=='CIFAR':
-        channels = 3
-        trainloaders = prepare_CIFAR(mode, batch_size, TwoCropsTransform(train_transform))
+    trainloaders = prepare_CIFAR(mode, batch_size, TwoCropsTransform(train_transform))
 
-    encoders = [Encoder(channels, encoded_dim).to(device) for _ in range(n_workers)]
-    models = [SimCLR(encoder, channels).to(device) for encoder in encoders]
+    models = [SimCLR(out_dim=encoded_dim).to(device) for _ in range(n_workers)]
     optimizers = [torch.optim.Adam(model.parameters(), lr=lr) for model in models]
-    custom_loss = InfoNCELoss(device, batch_size)
-    criterion = nn.CrossEntropyLoss()
+    custom_loss = InfoNCELoss(device, batch_size).to(device)
+    criterion = nn.CrossEntropyLoss().to(device)
 
     for model in models:
         model.train()
@@ -85,11 +92,12 @@ def train_simCLR(mode: str, dataset: str, epochs: int, batch_size: int, adj_matr
                 images = torch.cat(images, dim=0)
                 images = images.to(device)
 
+                optimizers[k].zero_grad()
                 features = models[k](images)
                 logits, labels = custom_loss(features)
                 loss = criterion(logits, labels)
+                curr_loss.append(loss.item())
 
-                optimizers[k].zero_grad()
                 loss.backward()
                 optimizers[k].step()
 
@@ -97,16 +105,11 @@ def train_simCLR(mode: str, dataset: str, epochs: int, batch_size: int, adj_matr
                     avg_train_loss = np.mean(curr_loss)
                     print(f'In epoch {epoch} for worker {k}, average training loss is {avg_train_loss}.')
                     worker_losses[k].append(avg_train_loss)
-
-        curr_average = np.mean([worker_losses[k][epoch] for k in worker_losses.keys()])
-        if es.early_stop(curr_average):
-            print(f'Stopped training autoencoder after epoch {epoch}.')
-            break
                 
-        if mode=='collaborative':
-            encoders = aggregate(n_workers, encoders, adj_matrix)
+        if mode=='collaborative' and epoch<epochs-1:
+            models = aggregate(n_workers, models, adj_matrix)
 
-    return encoders, worker_losses
+    return models, worker_losses
 
 
 if __name__=='__main__':
