@@ -45,11 +45,14 @@ def main(args):
     plot_losses(classifier_losses, f'{args.model_training}_SimCLR_{args.classifier_training}_Classifier_Losses', args.output)
     plot_accuracies(classifier_accuracies, f'{args.model_training}_SimCLR_{args.classifier_training}_Classifier_Accuracies', args.output)
 
-    test_accuracies = test_classifier(
+    test_accuracies, confusion_matrices = test_classifier(
         model=encoders,
         classifier=classifiers,
         dataset=args.dataset,
         mode=args.testing)
+    
+    for i, cm in enumerate(confusion_matrices):
+        plot_confusion_matrix(cm, args.dataset, args.output, i)
     
     save_accuracies(test_accuracies, args.output)
 
@@ -64,11 +67,10 @@ def train_simCLR(mode: str,
                  n_workers: int=5):
     
     train_transform = transforms.Compose([
-        transforms.RandomResizedCrop(size=32),
+        transforms.RandomApply([transforms.ColorJitter(0.4, 0.4, 0.4, 0.1)], p=0.8),
+        transforms.RandomGrayscale(p=0.2),
+        transforms.RandomApply([transforms.GaussianBlur(kernel_size=3)], p=0.5),
         transforms.RandomHorizontalFlip(),
-        transforms.RandomApply([transforms.ColorJitter(.8, .8, .8, .2)], p=.8),
-        transforms.RandomGrayscale(p=.2),
-        transforms.GaussianBlur(kernel_size=3),
         transforms.ToTensor()
     ])
 
@@ -78,6 +80,7 @@ def train_simCLR(mode: str,
 
     models = [SimCLR(out_dim=encoded_dim).to(device) for _ in range(n_workers)]
     optimizers = [torch.optim.Adam(model.parameters(), lr=lr) for model in models]
+    schedulers = [torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=len(trainloader), eta_min=0, last_epoch=-1, verbose=True) for optimizer in optimizers]
     custom_loss = InfoNCELoss(device, batch_size).to(device)
     criterion = nn.CrossEntropyLoss().to(device)
 
@@ -106,6 +109,9 @@ def train_simCLR(mode: str,
                     print(f'In epoch {epoch} for worker {k}, average training loss is {avg_train_loss}.')
                     worker_losses[k].append(avg_train_loss)
                 
+        for scheduler in schedulers:
+            scheduler.step()
+
         if mode=='collaborative' and epoch<epochs-1:
             models = aggregate(n_workers, models, adj_matrix)
 

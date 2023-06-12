@@ -9,19 +9,20 @@ from models.contrastive_learning import SimSiam, TwoCropsTransform
 from models.autoencoder import Encoder
 from utils.earlystopping import EarlyStopper
 from utils.aggregate import aggregate, generate_graph
-from utils.prepare_dataloaders import prepare_MNIST, prepare_CIFAR
+from utils.prepare_dataloaders import prepare_CIFAR
 from utils.dist_plotting import *
 from utils.save_config import save_config
 from classifiers.dist_classifier import *
 
 def main(args):
     save_config(args)
+    torch.manual_seed(0)
+    np.random.seed(2)
 
     A = generate_graph(5, args.topology)
 
     encoders, losses = train_SimSiam(
         mode=args.model_training,
-        dataset=args.dataset,
         batch_size=256,
         epochs=args.model_epochs,
         encoded_dim=args.encoded_dim,
@@ -36,17 +37,23 @@ def main(args):
         epochs=args.classifier_epochs,
         batch_size=16,
         encoded_dim=args.encoded_dim,
+        optimizer='Adam',
+        warmup_epochs=0,
+        scheduler=False,
         adj_matrix=A,
         simsiam=True)
     
     plot_losses(classifier_losses, f'{args.model_training}_SimSiam_{args.classifier_training}_Classifier_Losses', args.output)
     plot_accuracies(classifier_accuracies, f'{args.model_training}_SimSiam_{args.classifier_training}_Classifier_Accuracies', args.output)
 
-    test_accuracies = test_classifier(
+    test_accuracies, confusion_matrices = test_classifier(
         model=encoders,
         classifier=classifiers,
         dataset=args.dataset,
         mode=args.testing)
+    
+    for i, cm in enumerate(confusion_matrices):
+        plot_confusion_matrix(cm, args.dataset, args.output, i)
     
     save_accuracies(test_accuracies, args.output)
 
@@ -60,20 +67,14 @@ def train_SimSiam(mode: str, dataset: str, epochs: int, batch_size: int, adj_mat
         transforms.ToTensor()
     ])
     
-    es = EarlyStopper(min_delta=0.5)
     worker_losses = {0: [], 1: [], 2: [], 3: [], 4: []}
     
-    if dataset=='MNIST':
-        channels = 1
-        trainloaders = prepare_MNIST(mode, batch_size, TwoCropsTransform(train_transform))
-    elif dataset=='CIFAR':
-        channels = 3
-        trainloaders = prepare_CIFAR(mode, batch_size, TwoCropsTransform(train_transform))
+    trainloaders = prepare_CIFAR(mode, batch_size, TwoCropsTransform(train_transform))
 
-    encoders = [Encoder(channels, encoded_dim).to(device) for _ in range(n_workers)]
-    models = [SimSiam(encoder, dim=encoded_dim, pred_dim=encoded_dim//4).to(device) for encoder in encoders]
+    models = [SimSiam(dim=encoded_dim).to(device) for _ in range(n_workers)]
     optimizers = [torch.optim.Adam(model.parameters(), lr=lr) for model in models]
-    criterion = nn.CosineSimilarity(dim=1)
+    schedulers = [torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=len(trainloader), eta_min=0, last_epoch=-1, verbose=True) for optimizer in optimizers]
+    criterion = nn.CosineSimilarity(dim=1).to(device)
 
     for model in models:
         model.train()
@@ -98,13 +99,11 @@ def train_SimSiam(mode: str, dataset: str, epochs: int, batch_size: int, adj_mat
                     avg_train_loss = np.mean(curr_loss)
                     print(f'In epoch {epoch} for worker {k}, average training loss is {avg_train_loss}.')
                     worker_losses[k].append(avg_train_loss)
-
-        curr_average = np.mean([worker_losses[k][epoch] for k in worker_losses.keys()])
-        if es.early_stop(curr_average):
-            print(f'Stopped training autoencoder after epoch {epoch}.')
-            break
             
-        if mode=='collaborative':
+        for scheduler in schedulers:
+            scheduler.step()
+
+        if mode=='collaborative' and epoch<epochs-1:
             models = aggregate(n_workers, models, adj_matrix)
 
     return models, worker_losses

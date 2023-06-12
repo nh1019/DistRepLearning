@@ -15,6 +15,8 @@ from classifiers.centralized_classifier import *
 
 def main(args):
     save_config(args)
+    torch.manual_seed(0)
+    np.random.seed(2)
 
     encoder, losses = train_SimSiam(
         mode=args.model_training,
@@ -69,7 +71,7 @@ def train_SimSiam(mode: str,
     trainloader = prepare_CIFAR(mode, batch_size, TwoCropsTransform(train_transform))
     model = SimSiam(dim=encoded_dim).to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=lr) 
-    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=len(trainloader), eta_min=0, last_epoch=-1)
+    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=len(trainloader), eta_min=0, last_epoch=-1, verbose=True)
     criterion = nn.CosineSimilarity(dim=1).to(device)
 
     model.train()
