@@ -34,8 +34,7 @@ def main(args):
         optimizer='Adam',
         warmup_epochs=0,
         scheduler=False,
-        encoded_dim=args.encoded_dim,
-        simsiam=True)
+        encoded_dim=args.encoded_dim)
     
     plot_losses(classifier_losses, f'{args.model_training}_SimSiam_{args.classifier_training}_Classifier_Losses', args.output)
     plot_accuracies(classifier_accuracies, f'{args.model_training}_SimSiam_{args.classifier_training}_Classifier_Accuracies', args.output)
@@ -44,8 +43,7 @@ def main(args):
         model=encoder,
         classifier=classifier,
         dataset=args.dataset,
-        mode=args.testing,
-        simsiam=True)
+        mode=args.testing)
     
     save_accuracy(test_accuracies, args.output)
 
@@ -81,7 +79,7 @@ def train_SimSiam(mode: str,
             images[0] = images[0].to(device)
             images[1] = images[1].to(device)
 
-            p1, p2, z1, z2 = model(images[0], images[1])
+            p1, p2, z1, z2 = model(x1=images[0], x2=images[1])
             loss = -0.5*(criterion(p1, z2).mean() + criterion(p2, z1).mean())
             curr_loss.append(loss.item())
 

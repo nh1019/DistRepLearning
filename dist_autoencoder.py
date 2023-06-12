@@ -33,7 +33,7 @@ def main(args):
     plot_losses(AE_losses, f'{args.model_training}_Autoencoder_MSE_Losses', args.output)
 
     classifiers, classifier_losses, classifier_accuracies = train_classifier(
-        model=encoders,
+        models=encoders,
         dataset=args.dataset,
         mode=args.classifier_training,
         epochs=args.classifier_epochs,
@@ -48,7 +48,7 @@ def main(args):
     plot_accuracies(classifier_accuracies, f'Autoencoder_{args.classifier_training}_Classifier_Accuracies', args.output)
 
     test_accuracies, confusion_matrices = test_classifier(
-        model=encoders,
+        models=encoders,
         classifier=classifiers,
         dataset=args.dataset,
         mode=args.testing)

@@ -4,7 +4,6 @@ from torchvision import transforms
 from tqdm import tqdm
 import numpy as np
 
-from utils.earlystopping import EarlyStopper
 from models.linear_classifier import LinearClassifier
 from utils.prepare_dataloaders import prepare_MNIST, prepare_CIFAR
 from utils.centralized_plotting import plot_tsne
@@ -21,25 +20,17 @@ def train_classifier(model,
                      scheduler: bool,
                      train_transform=None, 
                      lr: float=1e-3, 
-                     device: str='cuda:0', 
-                     simsiam=False):
+                     device: str='cuda:0'):
     if train_transform is None:
         train_transform = transforms.Compose([
             transforms.ToTensor(),
             transforms.Normalize((.5,), (.5,))
         ])
 
-    #es = EarlyStopper(min_delta=0.2)
-
     if dataset=='MNIST':
         trainloader = prepare_MNIST(mode, batch_size, train_transform)
     elif dataset=='CIFAR':
         trainloader = prepare_CIFAR(mode, batch_size, train_transform)
-
-    if simsiam:
-        encoder = model.encoder
-    else:
-        encoder = model
 
     if warmup_epochs:
         desired_lr = lr
@@ -60,7 +51,7 @@ def train_classifier(model,
 
     criterion = nn.CrossEntropyLoss()
 
-    encoder.eval()
+    model.eval()
     classifier.train()
 
     for epoch in range(warmup_epochs):
@@ -71,7 +62,7 @@ def train_classifier(model,
             features, labels = features.to(device), labels.to(device)
 
             optim.zero_grad()
-            reps = encoder(features)
+            reps = model(features)
             classifier_output = classifier(reps)
             loss = criterion(classifier_output, labels)
 
@@ -92,7 +83,7 @@ def train_classifier(model,
             features, labels = features.to(device), labels.to(device)
 
             optim.zero_grad()
-            reps = encoder(features)
+            reps = model(features)
             classifier_output = classifier(reps)
             loss = criterion(classifier_output, labels)
 
@@ -115,24 +106,18 @@ def train_classifier(model,
         if scheduler:
                 sched.step()
 
-        '''
-        if es.early_stop(avg_train_loss):
-            print(f'Stopped training classifier after epoch {epoch}.')
-            break
-        '''
-
     return classifier, classifier_losses, classifier_accuracies
 
-def test_classifier(model, classifier, dataset: str, mode: str, device: str='cuda:0', simsiam=False):
-    if simsiam:
-        encoder = model.encoder
-    else:
-        encoder = model
+def test_classifier(model, 
+                    classifier, 
+                    dataset: str, 
+                    mode: str, 
+                    device: str='cuda:0'):
     
-    encoder.eval()
+    model.eval()
     classifier.eval()
 
-    plot_tsne(encoder, dataset)
+    plot_tsne(model, dataset)
 
     if dataset=='MNIST':
         testloader = prepare_MNIST(mode, batch_size=8, train=False)
@@ -145,7 +130,7 @@ def test_classifier(model, classifier, dataset: str, mode: str, device: str='cud
     with torch.no_grad():
         for (features, labels) in testloader:
             features, labels = features.to(device), labels.to(device)
-            reps = encoder(features)
+            reps = model(features)
             outputs = classifier(reps)
             _, predicted = torch.max(outputs.data, 1)
             total += labels.size(0)

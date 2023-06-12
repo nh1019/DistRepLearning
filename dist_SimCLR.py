@@ -31,7 +31,7 @@ def main(args):
     plot_losses(losses, f'{args.model_training}_SimCLR_Losses', args.output)
     
     classifiers, classifier_losses, classifier_accuracies = train_classifier(
-        model=encoders,
+        models=encoders,
         dataset=args.dataset,
         mode=args.classifier_training,
         epochs=args.classifier_epochs,
@@ -46,7 +46,7 @@ def main(args):
     plot_accuracies(classifier_accuracies, f'{args.model_training}_SimCLR_{args.classifier_training}_Classifier_Accuracies', args.output)
 
     test_accuracies, confusion_matrices = test_classifier(
-        model=encoders,
+        models=encoders,
         classifier=classifiers,
         dataset=args.dataset,
         mode=args.testing)
@@ -67,10 +67,11 @@ def train_simCLR(mode: str,
                  n_workers: int=5):
     
     train_transform = transforms.Compose([
-        transforms.RandomApply([transforms.ColorJitter(0.4, 0.4, 0.4, 0.1)], p=0.8),
-        transforms.RandomGrayscale(p=0.2),
-        transforms.RandomApply([transforms.GaussianBlur(kernel_size=3)], p=0.5),
+        transforms.RandomResizedCrop(size=32),
         transforms.RandomHorizontalFlip(),
+        transforms.RandomApply([transforms.ColorJitter(.8, .8, .8, .2)], p=.8),
+        transforms.RandomGrayscale(p=.2),
+        transforms.GaussianBlur(kernel_size=3),
         transforms.ToTensor()
     ])
 

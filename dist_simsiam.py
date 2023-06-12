@@ -31,7 +31,7 @@ def main(args):
     plot_losses(losses, f'{args.model_training}_SimSiam_Losses', args.output)
     
     classifiers, classifier_losses, classifier_accuracies = train_classifier(
-        model=encoders,
+        models=encoders,
         dataset=args.dataset,
         mode=args.classifier_training,
         epochs=args.classifier_epochs,
@@ -40,14 +40,13 @@ def main(args):
         optimizer='Adam',
         warmup_epochs=0,
         scheduler=False,
-        adj_matrix=A,
-        simsiam=True)
+        adj_matrix=A)
     
     plot_losses(classifier_losses, f'{args.model_training}_SimSiam_{args.classifier_training}_Classifier_Losses', args.output)
     plot_accuracies(classifier_accuracies, f'{args.model_training}_SimSiam_{args.classifier_training}_Classifier_Accuracies', args.output)
 
     test_accuracies, confusion_matrices = test_classifier(
-        model=encoders,
+        models=encoders,
         classifier=classifiers,
         dataset=args.dataset,
         mode=args.testing)

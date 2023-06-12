@@ -37,14 +37,19 @@ class SimSiam(nn.Module):
             nn.Linear(pred_dim, dim)
         )
 
-    def forward(self, x1, x2):
-        z1 = self.encoder(x1)
-        z2 = self.encoder(x2)
+    def forward(self, x1, x2=None):
+        #single representation for classifier
+        if x2 is None:
+            z = self.encoder(x1)
+            return z
+        else:
+            z1 = self.encoder(x1)
+            z2 = self.encoder(x2)
 
-        p1 = self.predictor(z1)
-        p2 = self.predictor(z2)
+            p1 = self.predictor(z1)
+            p2 = self.predictor(z2)
 
-        return p1, p2, z1.detach(), z2.detach()
+            return p1, p2, z1.detach(), z2.detach()
     
 class SimCLR(nn.Module):
     def __init__(self, out_dim):

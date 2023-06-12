@@ -14,7 +14,7 @@ from utils.aggregate import aggregate
 from utils.prepare_dataloaders import prepare_MNIST, prepare_CIFAR
 
 
-def train_classifier(model, 
+def train_classifier(models, 
                      dataset: str, 
                      mode: str, 
                      epochs: int, 
@@ -27,8 +27,7 @@ def train_classifier(model,
                      train_transform=None, 
                      lr: float=1e-3, 
                      device: str='cuda:0', 
-                     n_workers: int=5, 
-                     simsiam=False):
+                     n_workers: int=5):
     
     if train_transform is None:
         train_transform = transforms.Compose([
@@ -42,11 +41,6 @@ def train_classifier(model,
         trainloaders = prepare_MNIST(mode, batch_size, train_transform)
     elif dataset=='CIFAR':
         trainloaders = prepare_CIFAR(mode, batch_size, train_transform)
-
-    if simsiam:
-        models = [model.encoder for model in models]
-    else:
-        models = model
         
     classifiers = [LinearClassifier(encoded_dim, 10).to(device) for _ in range(n_workers)]
     criterion = nn.CrossEntropyLoss()
@@ -127,38 +121,25 @@ def train_classifier(model,
             for k in range(n_workers):
                 schedulers[k].step()
 
-        #curr_average = np.mean([classifier_losses[k][epoch] for k in classifier_losses.keys()])
-        '''
-        if es.early_stop(curr_average):
-            print(f'Stopped training classifier after epoch {epoch}.')
-            break
-        '''    
-
-        if mode=='collaborative' and epoch != epochs-1:
+        if mode=='collaborative' and epoch<epochs-1:
             classifiers = aggregate(n_workers, classifiers, adj_matrix)
 
     return classifiers, classifier_losses, classifier_accuracies
 
-def test_classifier(model, 
+def test_classifier(models, 
                     classifier, 
                     dataset: str, 
                     mode: str, 
                     device: str='cuda:0', 
-                    n_workers: int=5, 
-                    simsiam=False):
+                    n_workers: int=5):
     
     classifiers = classifier
-
-    if simsiam:
-        encoders = [encoder.encoder for encoder in model]
-    else:
-        encoders = model
     
     for i in range(n_workers):
-        encoders[i].eval()
+        models[i].eval()
         classifiers[i].eval()
 
-    plot_tsne(model, dataset)
+    plot_tsne(models, dataset)
 
     if dataset=='MNIST':
         testloaders = prepare_MNIST(mode, batch_size=8, train=False)
@@ -167,7 +148,7 @@ def test_classifier(model,
         #save examples
         for j in range(n_workers):
             img = test_datasets[j][0][0].cpu()
-            encoded_img = encoders[j](img.unsqueeze(0).to(device)).detach().cpu().reshape(1, 1, -1)
+            encoded_img = models[j](img.unsqueeze(0).to(device)).detach().cpu().reshape(1, 1, -1)
 
             img = (img*255).to(torch.uint8)
             encoded_img = (encoded_img*255).to(torch.uint8)
@@ -192,7 +173,7 @@ def test_classifier(model,
             predicted_labels = []
             for (features, labels) in testloader:
                 features, labels = features.to(device), labels.to(device)
-                reps = encoders[k](features)
+                reps = models[k](features)
                 outputs = classifiers[k](reps)
                 _, predicted = torch.max(outputs.data, 1)
                 total += labels.size(0)
