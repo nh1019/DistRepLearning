@@ -71,7 +71,7 @@ def train_SimSiam(mode: str,
     trainloader = prepare_CIFAR(mode, batch_size, TwoCropsTransform(train_transform))
     model = SimSiam(dim=encoded_dim).to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=1e-5) 
-    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=len(trainloader), eta_min=0, last_epoch=-1, verbose=True)
+    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=200, eta_min=0, last_epoch=-1, verbose=True)
     criterion = nn.CosineSimilarity(dim=1).to(device)
 
     model.train()
