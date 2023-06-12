@@ -6,7 +6,6 @@ from tqdm import tqdm
 import numpy as np
 
 from models.contrastive_learning import SimSiam, TwoCropsTransform
-from models.autoencoder import Encoder
 from utils.earlystopping import EarlyStopper
 from utils.prepare_dataloaders import prepare_CIFAR
 from utils.centralized_plotting import *
@@ -32,6 +31,9 @@ def main(args):
         mode=args.classifier_training,
         epochs=args.classifier_epochs,
         batch_size=16,
+        optimizer='Adam',
+        warmup_epochs=0,
+        scheduler=False,
         encoded_dim=args.encoded_dim,
         simsiam=True)
     
@@ -43,9 +45,6 @@ def main(args):
         classifier=classifier,
         dataset=args.dataset,
         mode=args.testing,
-        optimizer='Adam',
-        warmup_epochs=0,
-        scheduler=False,
         simsiam=True)
     
     save_accuracy(test_accuracies, args.output)
