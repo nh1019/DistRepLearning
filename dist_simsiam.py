@@ -23,7 +23,7 @@ def main(args):
 
     encoders, losses = train_SimSiam(
         mode=args.model_training,
-        batch_size=256,
+        batch_size=512,
         epochs=args.model_epochs,
         encoded_dim=args.encoded_dim,
         adj_matrix=A)
@@ -62,13 +62,12 @@ def train_SimSiam(mode: str,
                  batch_size: int, 
                  adj_matrix, 
                  encoded_dim: int=128, 
-                 lr: float=1e-3, 
+                 lr: float=0.06, 
                  device: str='cuda:0', 
                  n_workers: int=5):
     train_transform = transforms.Compose([
         transforms.RandomApply([transforms.ColorJitter(0.4, 0.4, 0.4, 0.1)], p=0.8),
         transforms.RandomGrayscale(p=0.2),
-        transforms.RandomApply([transforms.GaussianBlur(kernel_size=3)], p=0.5),
         transforms.RandomHorizontalFlip(),
         transforms.ToTensor()
     ])
@@ -78,7 +77,7 @@ def train_SimSiam(mode: str,
     trainloaders = prepare_CIFAR(mode, batch_size, TwoCropsTransform(train_transform))
 
     models = [SimSiam(dim=encoded_dim).to(device) for _ in range(n_workers)]
-    optimizers = [torch.optim.Adam(model.parameters(), lr=lr, weight_decay=1e-5) for model in models]
+    optimizers = [torch.optim.Adam(model.parameters(), lr=lr) for model in models]
     schedulers = [torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=200, eta_min=0, last_epoch=-1, verbose=True) for optimizer in optimizers]
     criterion = nn.CosineSimilarity(dim=1).to(device)
 
