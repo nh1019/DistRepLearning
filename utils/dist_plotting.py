@@ -130,7 +130,7 @@ def plot_norms(norms, output_dir=None):
 
         with open(csv_file, 'w', newline='') as f:
             writer = csv.writer(f)
-            writer.writerows(*norms)
+            writer.writerows(norms)
 
     else:
         plt.show()
