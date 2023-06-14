@@ -87,6 +87,7 @@ def train_AE(mode: str,
         trainloaders = prepare_CIFAR(mode, batch_size, train_transform)
 
     worker_losses = {0: [], 1: [], 2: [], 3: [], 4: []}
+    worker_norms = {0: [], 1: [], 2: [], 3: [], 4: []}
     norms = []
     encoders = [Encoder(channels, encoded_dim).to(device) for _ in range(n_workers)]
     decoders = [Decoder(channels, encoded_dim).to(device) for _ in range(n_workers)]
@@ -161,6 +162,7 @@ def train_AE(mode: str,
                     avg_train_loss = np.mean(curr_loss)
                     print(f'In epoch {epoch} for worker {k}, average training loss is {avg_train_loss}.')
                     worker_losses[k].append(avg_train_loss)
+                    worker_norms[k].append(torch.norm(encoders[k], p=2).item())
 
         
         #check whether to stop early 
