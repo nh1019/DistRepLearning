@@ -55,7 +55,7 @@ def prepare_CIFAR(mode: str, batch_size: int, train_transform=None, train=True, 
         train_dataset = datasets.CIFAR10(root='./data', train=True, transform=train_transform, download=True)
 
         if iid:
-            l = int(len(train_dataset)/4)
+            l = int(len(train_dataset)/5)
             subsets = [Subset(train_dataset, range(i*l,(i+1)*l)) for i in range(0,5)]
             trainloaders = [DataLoader(subset, batch_size, shuffle=True, drop_last=True) for subset in subsets]
 
