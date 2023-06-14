@@ -7,11 +7,11 @@ import torchvision.io as tvio
 from sklearn.metrics import confusion_matrix
 import torch.nn.functional as F
 
-from utils.earlystopping import EarlyStopper
 from models.linear_classifier import LinearClassifier
 from utils.dist_plotting import plot_tsne
 from utils.aggregate import aggregate
-from utils.prepare_dataloaders import prepare_MNIST, prepare_CIFAR
+from utils.prepare_dataloaders import *
+from utils.calc_norms import calculate_mean_norm
 
 
 def train_classifier(models, 
@@ -23,6 +23,8 @@ def train_classifier(models,
                      optimizer: str,
                      warmup_epochs: int,
                      scheduler: bool,
+                     testing: str,
+                     data_fraction: float,
                      adj_matrix, 
                      train_transform=None, 
                      lr: float=1e-3, 
@@ -38,7 +40,7 @@ def train_classifier(models,
     #es = EarlyStopper()
 
     if dataset=='MNIST':
-        trainloaders = prepare_MNIST(mode, batch_size, train_transform)
+        trainloaders = prepare_MNIST(mode, batch_size, train_transform, data_fraction=data_fraction)
     elif dataset=='CIFAR':
         trainloaders = prepare_CIFAR(mode, batch_size, train_transform)
         
@@ -121,8 +123,10 @@ def train_classifier(models,
             for k in range(n_workers):
                 schedulers[k].step()
 
-        if mode=='collaborative' and epoch<epochs-1:
+        if mode=='collaborative' and (testing=='global' or epoch<epochs-1):
             classifiers = aggregate(n_workers, classifiers, adj_matrix)
+        
+        calculate_mean_norm(classifiers)
 
     return classifiers, classifier_losses, classifier_accuracies
 

@@ -79,12 +79,8 @@ def train_AE(mode: str,
             transforms.ToTensor()
         ])
     
-    if dataset=='MNIST':
-        channels = 1
-        trainloaders = prepare_MNIST(mode, batch_size, train_transform, data_fraction=data_fraction)
-    elif dataset=='CIFAR':
-        channels = 3
-        trainloaders = prepare_CIFAR(mode, batch_size, train_transform)
+    trainloaders = prepare_CIFAR(mode, batch_size, train_transform, train=True, iid=True)
+    channels=3
 
     worker_losses = {0: [], 1: [], 2: [], 3: [], 4: []}
     norms = []

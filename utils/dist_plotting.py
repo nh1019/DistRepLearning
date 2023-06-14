@@ -113,4 +113,26 @@ def plot_tsne(models, dataset, device='cuda:0'):
         reps_tsne = tsne.fit_transform(reps.cpu().data)
         plot_vecs_n_labels(reps_tsne, dataset, labels, f'./results/t-SNE_worker_{i}')
 
+def plot_norms(norms, output_dir=None):
+    plt.clf()
+
+    x = range(len(norms))
+    plot_file = output_dir + '/norms.png'
+    csv_file = output_dir + '/norms.csv'
+
+    plt.plot(x, norms)
+    plt.title('Mean $L_2$-Norm between Model Parameters') 
+    plt.xlabel('Epochs')
+    plt.ylabel('Mean Norm')
+
+    if output_dir is not None:
+        plt.savefig(plot_file)
+
+        with open(csv_file, 'w', newline='') as f:
+            writer = csv.writer(f)
+            writer.writerows(*norms)
+
+    else:
+        plt.show()
+
         
