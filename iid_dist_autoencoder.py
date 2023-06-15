@@ -6,12 +6,11 @@ from tqdm import tqdm
 from torchvision.transforms import transforms
 
 from models.autoencoder import Encoder, Decoder
-from utils.prepare_dataloaders import prepare_MNIST, prepare_CIFAR
+from utils.prepare_dataloaders import prepare_CIFAR
 from utils.aggregate import aggregate, generate_graph
 from utils.dist_plotting import *
 from utils.save_config import save_config
 from classifiers.dist_classifier import *
-from utils.calc_norms import calculate_mean_norm
 
 def main(args):
     save_config(args)
@@ -21,7 +20,6 @@ def main(args):
 
     encoders, AE_losses, encoded_dim = train_AE(
         mode=args.model_training,
-        dataset=args.dataset,
         batch_size=16,
         epochs=args.model_epochs,
         encoded_dim=args.encoded_dim,
@@ -59,8 +57,7 @@ def main(args):
     
     save_accuracies(test_accuracies, args.output)
 
-def train_AE(mode: str, 
-             dataset: str, 
+def train_AE(mode: str,  
              batch_size: int, 
              epochs: int, 
              encoded_dim: int, 
