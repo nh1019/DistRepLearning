@@ -53,6 +53,7 @@ def train_classifier(models,
 
     classifier_accuracies = {0: [], 1: [], 2: [], 3: [], 4: []}
     classifier_losses = {0: [], 1: [], 2: [], 3: [], 4: []}
+    norms = []
 
     if warmup_epochs:
         desired_lr = lr
@@ -128,7 +129,7 @@ def train_classifier(models,
         
         calculate_mean_norm(classifiers)
 
-    return classifiers, classifier_losses, classifier_accuracies
+    return classifiers, classifier_losses, classifier_accuracies, norms
 
 def test_classifier(models, 
                     classifier, 

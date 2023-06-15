@@ -33,7 +33,7 @@ def main(args):
     plot_losses(AE_losses, f'{args.model_training}_Autoencoder_MSE_Losses', args.output)
     plot_norms(norms, args.output)
 
-    classifiers, classifier_losses, classifier_accuracies = train_classifier(
+    classifiers, classifier_losses, classifier_accuracies, classifier_norms = train_classifier(
         models=encoders,
         dataset=args.dataset,
         mode=args.classifier_training,
@@ -48,6 +48,7 @@ def main(args):
     
     plot_losses(classifier_losses, f'Autoencoder_{args.classifier_training}_Classifier_Losses', args.output)
     plot_accuracies(classifier_accuracies, f'Autoencoder_{args.classifier_training}_Classifier_Accuracies', args.output)
+    plot_norms(classifier_norms, args.output)
 
     test_accuracies, confusion_matrices = test_classifier(
         models=encoders,
@@ -87,7 +88,6 @@ def train_AE(mode: str,
         trainloaders = prepare_CIFAR(mode, batch_size, train_transform)
 
     worker_losses = {0: [], 1: [], 2: [], 3: [], 4: []}
-    worker_norms = {0: [], 1: [], 2: [], 3: [], 4: []}
     norms = []
     encoders = [Encoder(channels, encoded_dim).to(device) for _ in range(n_workers)]
     decoders = [Decoder(channels, encoded_dim).to(device) for _ in range(n_workers)]
@@ -162,7 +162,6 @@ def train_AE(mode: str,
                     avg_train_loss = np.mean(curr_loss)
                     print(f'In epoch {epoch} for worker {k}, average training loss is {avg_train_loss}.')
                     worker_losses[k].append(avg_train_loss)
-                    worker_norms[k].append(torch.norm(encoders[k].parameters(), p=2).item())
 
         
         #check whether to stop early 

@@ -19,7 +19,7 @@ def main(args):
     np.random.seed(2)
     A = generate_graph(5, args.topology)
 
-    encoders, AE_losses, encoded_dim, norms = train_AE(
+    encoders, AE_losses, encoded_dim = train_AE(
         mode=args.model_training,
         dataset=args.dataset,
         batch_size=16,
@@ -168,7 +168,7 @@ def train_AE(mode: str,
             encoders = aggregate(n_workers, encoders, adj_matrix)
             decoders = aggregate(n_workers, decoders, adj_matrix)
 
-    return encoders, worker_losses, encoded_dim, norms
+    return encoders, worker_losses, encoded_dim
 
 if __name__=='__main__':
     parser = argparse.ArgumentParser()
