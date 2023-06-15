@@ -31,7 +31,6 @@ def main(args):
         adj_matrix=A)
     
     plot_losses(AE_losses, f'{args.model_training}_Autoencoder_MSE_Losses', args.output)
-    plot_norms(norms, args.output)
 
     classifiers, classifier_losses, classifier_accuracies = train_classifier(
         models=encoders,
@@ -83,7 +82,6 @@ def train_AE(mode: str,
     channels=3
 
     worker_losses = {0: [], 1: [], 2: [], 3: [], 4: []}
-    norms = []
     encoders = [Encoder(channels, encoded_dim).to(device) for _ in range(n_workers)]
     decoders = [Decoder(channels, encoded_dim).to(device) for _ in range(n_workers)]
     
@@ -169,8 +167,6 @@ def train_AE(mode: str,
         if mode=='collaborative':
             encoders = aggregate(n_workers, encoders, adj_matrix)
             decoders = aggregate(n_workers, decoders, adj_matrix)
-
-        norms.append(calculate_mean_norm(encoders))
 
     return encoders, worker_losses, encoded_dim, norms
 

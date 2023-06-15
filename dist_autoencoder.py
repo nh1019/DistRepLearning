@@ -162,7 +162,7 @@ def train_AE(mode: str,
                     avg_train_loss = np.mean(curr_loss)
                     print(f'In epoch {epoch} for worker {k}, average training loss is {avg_train_loss}.')
                     worker_losses[k].append(avg_train_loss)
-                    worker_norms[k].append(torch.norm(encoders[k], p=2).item())
+                    worker_norms[k].append(torch.norm(encoders[k].parameters(), p=2).item())
 
         
         #check whether to stop early 
