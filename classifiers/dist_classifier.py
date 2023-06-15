@@ -127,7 +127,7 @@ def train_classifier(models,
         if mode=='collaborative' and (testing=='global' or epoch<epochs-1):
             classifiers = aggregate(n_workers, classifiers, adj_matrix)
         
-        calculate_mean_norm(classifiers)
+        norms.append(calculate_mean_norm(classifiers))
 
     return classifiers, classifier_losses, classifier_accuracies, norms
 
