@@ -31,7 +31,7 @@ def main(args):
         adj_matrix=A)
     
     plot_losses(AE_losses, f'{args.model_training}_Autoencoder_MSE_Losses', args.output)
-    plot_norms(norms, args.output, type='Encoder')
+    plot_norms(norms, type='Encoder', output_dir=args.output)
 
     classifiers, classifier_losses, classifier_accuracies, classifier_norms = train_classifier(
         models=encoders,
@@ -48,7 +48,7 @@ def main(args):
     
     plot_losses(classifier_losses, f'Autoencoder_{args.classifier_training}_Classifier_Losses', args.output)
     plot_accuracies(classifier_accuracies, f'Autoencoder_{args.classifier_training}_Classifier_Accuracies', args.output)
-    plot_norms(classifier_norms, args.output, type='Classifier')
+    plot_norms(classifier_norms, type='Classifier', output_dir=args.output)
 
     test_accuracies, confusion_matrices = test_classifier(
         models=encoders,
