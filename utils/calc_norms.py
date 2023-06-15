@@ -7,7 +7,7 @@ def calculate_pairwise_l2_norm(model1, model2):
         normalised_param2 = param2.flatten() / torch.norm(param2.flatten(), p=2)
         diff = normalised_param1 - normalised_param2
         l2_norm += torch.norm(diff, p=2)
-    return l2_norm.item() / len(model1.parameters())
+    return l2_norm.item() / len(list(model1.parameters()))
 
 def calculate_mean_norm(models: list):
     pairwise_norms = []
