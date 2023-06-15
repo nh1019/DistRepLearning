@@ -117,11 +117,11 @@ def plot_norms(norms, type, output_dir=None):
     plt.clf()
 
     x = range(len(norms))
-    plot_file = output_dir + '/norms.png'
-    csv_file = output_dir + '/norms.csv'
+    plot_file = output_dir + '/' + type + '_norms.png'
+    csv_file = output_dir + '/' + type + '_norms.csv'
 
     plt.plot(x, norms)
-    plt.title(f'Mean $L_2$-Norm between {type} Parameters') 
+    plt.title(f'Mean $L_2$-Norm between Model Parameters') 
     plt.xlabel('Epochs')
     plt.ylabel('Mean Norm')
 
