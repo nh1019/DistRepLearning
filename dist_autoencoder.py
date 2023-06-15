@@ -11,7 +11,6 @@ from utils.aggregate import aggregate, generate_graph
 from utils.dist_plotting import *
 from utils.save_config import save_config
 from classifiers.dist_classifier import *
-from utils.calc_norms import calculate_mean_norm
 
 def main(args):
     save_config(args)
@@ -19,7 +18,7 @@ def main(args):
     np.random.seed(2)
     A = generate_graph(5, args.topology)
 
-    encoders, AE_losses, encoded_dim, norms = train_AE(
+    encoders, AE_losses, encoded_dim = train_AE(
         mode=args.model_training,
         dataset=args.dataset,
         batch_size=16,
@@ -31,9 +30,8 @@ def main(args):
         adj_matrix=A)
     
     plot_losses(AE_losses, f'{args.model_training}_Autoencoder_MSE_Losses', args.output)
-    plot_norms(norms, type='Encoder', output_dir=args.output)
 
-    classifiers, classifier_losses, classifier_accuracies, classifier_norms = train_classifier(
+    classifiers, classifier_losses, classifier_accuracies = train_classifier(
         models=encoders,
         dataset=args.dataset,
         mode=args.classifier_training,
@@ -48,7 +46,6 @@ def main(args):
     
     plot_losses(classifier_losses, f'Autoencoder_{args.classifier_training}_Classifier_Losses', args.output)
     plot_accuracies(classifier_accuracies, f'Autoencoder_{args.classifier_training}_Classifier_Accuracies', args.output)
-    plot_norms(classifier_norms, type='Classifier', output_dir=args.output)
 
     test_accuracies, confusion_matrices = test_classifier(
         models=encoders,
@@ -88,7 +85,6 @@ def train_AE(mode: str,
         trainloaders = prepare_CIFAR(mode, batch_size, train_transform)
 
     worker_losses = {0: [], 1: [], 2: [], 3: [], 4: []}
-    norms = []
     encoders = [Encoder(channels, encoded_dim).to(device) for _ in range(n_workers)]
     decoders = [Decoder(channels, encoded_dim).to(device) for _ in range(n_workers)]
     
@@ -175,9 +171,7 @@ def train_AE(mode: str,
             encoders = aggregate(n_workers, encoders, adj_matrix)
             decoders = aggregate(n_workers, decoders, adj_matrix)
 
-        norms.append(calculate_mean_norm(encoders))
-
-    return encoders, worker_losses, encoded_dim, norms
+    return encoders, worker_losses, encoded_dim
 
 if __name__=='__main__':
     parser = argparse.ArgumentParser()

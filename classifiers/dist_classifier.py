@@ -11,7 +11,6 @@ from models.linear_classifier import LinearClassifier
 from utils.dist_plotting import plot_tsne
 from utils.aggregate import aggregate
 from utils.prepare_dataloaders import *
-from utils.calc_norms import calculate_mean_norm
 
 
 def train_classifier(models, 
@@ -53,7 +52,6 @@ def train_classifier(models,
 
     classifier_accuracies = {0: [], 1: [], 2: [], 3: [], 4: []}
     classifier_losses = {0: [], 1: [], 2: [], 3: [], 4: []}
-    norms = []
 
     if warmup_epochs:
         desired_lr = lr
@@ -126,10 +124,8 @@ def train_classifier(models,
 
         if mode=='collaborative' and (testing=='global' or epoch<epochs-1):
             classifiers = aggregate(n_workers, classifiers, adj_matrix)
-        
-        norms.append(calculate_mean_norm(classifiers))
 
-    return classifiers, classifier_losses, classifier_accuracies, norms
+    return classifiers, classifier_losses, classifier_accuracies
 
 def test_classifier(models, 
                     classifier, 
