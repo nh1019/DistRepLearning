@@ -32,8 +32,8 @@ def main(args):
             adj_matrix=A,
             data_fraction=frac)
         
-        plot_losses(classifier_losses, f'{args.model_training}_{frac}_Encoder_Classifier_Losses', args.output)
-        plot_accuracies(classifier_accuracies, f'{args.model_training}_{frac}_Encoder_Classifier_Accuracies', args.output)
+        plot_losses(classifier_losses, f'{args.model_training}_{frac}_Encoder_Binary_Classifier_Losses', args.output)
+        plot_accuracies(classifier_accuracies, f'{args.model_training}_{frac}_Encoder_Binary_Classifier_Accuracies', args.output)
 
         test_accuracies = test_binary_classifier(encoders, 
                                         classifiers, 

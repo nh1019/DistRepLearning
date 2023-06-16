@@ -60,6 +60,10 @@ def prepare_CIFAR(mode: str, batch_size: int, data_fraction: float=1., train_tra
         train_dataset = datasets.CIFAR10(root='./data', train=True, transform=train_transform, download=True)
 
         if iid:
+            if data_fraction<1.:
+                num_samples = int(data_fraction*len(train_dataset))
+                train_dataset = torch.utils.data.random_split(train_dataset, [num_samples, len(train_dataset)-num_samples])[0]
+                
             l = int(len(train_dataset)/5)
             subsets = [Subset(train_dataset, range(i*l,(i+1)*l)) for i in range(0,5)]
             return [DataLoader(subset, batch_size, shuffle=True, drop_last=True) for subset in subsets]
@@ -69,7 +73,7 @@ def prepare_CIFAR(mode: str, batch_size: int, data_fraction: float=1., train_tra
                 if data_fraction<1.:
                     num_samples = int(data_fraction*len(train_dataset))
                     train_dataset = torch.utils.data.random_split(train_dataset, [num_samples, len(train_dataset)-num_samples])[0]
-                    
+
                 return DataLoader(train_dataset, batch_size, shuffle=True, drop_last=True)
             else:
                 #separate data among workers by class
