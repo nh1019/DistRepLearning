@@ -14,7 +14,8 @@ def prepare_MNIST(mode: str, batch_size: int, train_transform=None, train=True, 
             if data_fraction<1.:
                 num_samples = int(data_fraction*len(train_dataset))
                 train_dataset = torch.utils.data.random_split(train_dataset, [num_samples, len(train_dataset)-num_samples])[0]
-                return DataLoader(train_dataset, batch_size, shuffle=True, drop_last=True)
+
+            return DataLoader(train_dataset, batch_size, shuffle=True, drop_last=True)
         else:
             #separate data among workers by class
             worker_datasets = []
@@ -68,7 +69,8 @@ def prepare_CIFAR(mode: str, batch_size: int, data_fraction: float=1., train_tra
                 if data_fraction<1.:
                     num_samples = int(data_fraction*len(train_dataset))
                     train_dataset = torch.utils.data.random_split(train_dataset, [num_samples, len(train_dataset)-num_samples])[0]
-                    return DataLoader(train_dataset, batch_size, shuffle=True, drop_last=True)
+                    
+                return DataLoader(train_dataset, batch_size, shuffle=True, drop_last=True)
             else:
                 #separate data among workers by class
                 worker_datasets = []

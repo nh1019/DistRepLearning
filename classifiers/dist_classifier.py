@@ -140,7 +140,7 @@ def test_classifier(models,
         models[i].eval()
         classifiers[i].eval()
 
-    plot_tsne(models, dataset)
+    #plot_tsne(models, dataset)
 
     if dataset=='MNIST':
         testloaders = prepare_MNIST(mode, batch_size=8, train=False)
@@ -204,7 +204,7 @@ def test_binary_classifier(model,
         encoders[i].eval()
         classifiers[i].eval()
 
-    plot_tsne(model, dataset)
+    #plot_tsne(model, dataset)
 
     activation = nn.Sigmoid()
 
