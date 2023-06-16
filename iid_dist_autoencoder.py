@@ -79,7 +79,7 @@ def train_AE(mode: str,
             transforms.ToTensor()
         ])
     
-    trainloaders = prepare_CIFAR(mode=mode, batch_size=batch_size, train_transform=train_transform, train=True, iid=True)
+    trainloaders = prepare_CIFAR(mode=mode, batch_size=batch_size, train_transform=train_transform, train=True, iid=True, data_fraction=data_fraction)
     channels=3
 
     worker_losses = {0: [], 1: [], 2: [], 3: [], 4: []}
