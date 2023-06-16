@@ -65,7 +65,7 @@ def train_EC(encoder_mode: str,
         trainloaders = prepare_MNIST(encoder_mode, batch_size, train_transform)
     elif dataset=='CIFAR':
         channels = 3
-        trainloaders = prepare_CIFAR(encoder_mode, batch_size, train_transform, data_fraction=data_fraction)
+        trainloaders = prepare_CIFAR(mode=encoder_mode, batch_size=batch_size, train_transform=train_transform, data_fraction=data_fraction)
 
     encoders = [Encoder(channels, encoded_dim).to(device) for _ in range(n_workers)]
     classifiers = [LinearClassifier(encoded_dim, 2).to(device) for _ in range(n_workers)]

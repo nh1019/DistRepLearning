@@ -76,7 +76,7 @@ def train_simCLR(mode: str,
     es = EarlyStopper(min_delta=0.2)
     epoch_losses = []
 
-    trainloader = prepare_CIFAR(mode, batch_size, TwoCropsTransform(train_transform), data_fraction=data_fraction)
+    trainloader = prepare_CIFAR(mode=mode, batch_size=batch_size, train_transform=TwoCropsTransform(train_transform), data_fraction=data_fraction)
 
     model = SimCLR(out_dim=encoded_dim).to(device)
 

@@ -83,10 +83,10 @@ def train_AE(mode: str,
     
     if dataset=='MNIST':
         channels = 1
-        trainloaders = prepare_MNIST(mode, batch_size, train_transform, data_fraction=data_fraction)
+        trainloaders = prepare_MNIST(mode=mode, batch_size=batch_size, train_transform=train_transform, data_fraction=data_fraction)
     elif dataset=='CIFAR':
         channels = 3
-        trainloaders = prepare_CIFAR(mode, batch_size, train_transform, data_fraction=data_fraction)
+        trainloaders = prepare_CIFAR(mode=mode, batch_size=batch_size, train_transform=train_transform, data_fraction=data_fraction)
 
     worker_losses = {0: [], 1: [], 2: [], 3: [], 4: []}
     encoders = [Encoder(channels, encoded_dim).to(device) for _ in range(n_workers)]

@@ -29,9 +29,9 @@ def train_classifier(model,
         ])
 
     if dataset=='MNIST':
-        trainloader = prepare_MNIST(mode, batch_size, train_transform, data_fraction=data_fraction)
+        trainloader = prepare_MNIST(mode=mode, batch_size=batch_size, train_transform=train_transform, data_fraction=data_fraction)
     elif dataset=='CIFAR':
-        trainloader = prepare_CIFAR(mode, batch_size, train_transform, data_fraction=data_fraction)
+        trainloader = prepare_CIFAR(mode=mode, batch_size=batch_size, train_transform=train_transform, data_fraction=data_fraction)
 
     if warmup_epochs:
         desired_lr = lr

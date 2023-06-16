@@ -72,10 +72,10 @@ def train_AE(mode: str,
     
     if dataset=='MNIST':
         channels = 1
-        trainloader = prepare_MNIST(mode, batch_size, train_transform, data_fraction=data_fraction)
+        trainloader = prepare_MNIST(mode=mode, batch_size=batch_size, train_transform=train_transform, data_fraction=data_fraction)
     elif dataset=='CIFAR':
         channels = 3
-        trainloader = prepare_CIFAR(mode, batch_size, train_transform, data_fraction=data_fraction)
+        trainloader = prepare_CIFAR(mode=mode, batch_size=batch_size, train_transform=train_transform, data_fraction=data_fraction)
 
     epoch_losses = []
     encoder = Encoder(channels, encoded_dim).to(device)
