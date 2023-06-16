@@ -10,10 +10,6 @@ def prepare_MNIST(mode: str, batch_size: int, train_transform=None, train=True, 
     if train:
         train_dataset = datasets.MNIST(root='./data', train=True, transform=train_transform, download=True)
 
-        if data_fraction<1.:
-            num_samples = int(data_fraction*len(train_dataset))
-            train_dataset = torch.utils.data.random_split(train_dataset, [num_samples, len(train_dataset) - num_samples])[0]
-
         if mode=='centralized':
             if data_fraction<1.:
                 num_samples = int(data_fraction*len(train_dataset))
@@ -27,7 +23,7 @@ def prepare_MNIST(mode: str, batch_size: int, train_transform=None, train=True, 
                 worker_dataset = Subset(train_dataset, idx)
                 if data_fraction<1.:
                         worker_samples = int(data_fraction*len(worker_dataset))
-                        worker_dataset = torch.utils.data.random_split(worker_dataset, [worker_samples, len(worker_dataset)-worker_samples])
+                        worker_dataset = torch.utils.data.random_split(worker_dataset, [worker_samples, len(worker_dataset)-worker_samples])[0]
 
                 worker_datasets.append(worker_dataset)
 
@@ -83,7 +79,7 @@ def prepare_CIFAR(mode: str, batch_size: int, data_fraction: float=1., train_tra
                     worker_dataset = Subset(train_dataset, idx)
                     if data_fraction<1.:
                         worker_samples = int(data_fraction*len(worker_dataset))
-                        worker_dataset = torch.utils.data.random_split(worker_dataset, [worker_samples, len(worker_dataset)-worker_samples])
+                        worker_dataset = torch.utils.data.random_split(worker_dataset, [worker_samples, len(worker_dataset)-worker_samples])[0]
                     
                     worker_datasets.append(worker_dataset)
 
