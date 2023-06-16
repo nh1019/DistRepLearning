@@ -41,7 +41,8 @@ def main(args):
             scheduler=False,
             encoded_dim=args.encoded_dim,
             adj_matrix=A,
-            data_fraction=frac)
+            data_fraction=frac,
+            testing=args.testing)
         
         plot_losses(classifier_losses, f'{args.model_training}_{frac}_SimCLR_{args.classifier_training}_Classifier_Losses', args.output)
         plot_accuracies(classifier_accuracies, f'{args.model_training}_SimCLR_{frac}_{args.classifier_training}_Classifier_Accuracies', args.output)
