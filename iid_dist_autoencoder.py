@@ -23,6 +23,7 @@ def main(args):
         encoders, AE_losses, encoded_dim = train_AE(
             mode=args.model_training,
             batch_size=16,
+            dataset=args.dataset,
             epochs=args.model_epochs,
             encoded_dim=args.encoded_dim,
             optimizer=args.optimizer,
@@ -31,7 +32,7 @@ def main(args):
             adj_matrix=A,
             data_fraction=frac)
         
-        plot_losses(AE_losses, f'{args.model_training}_frac_Autoencoder_MSE_Losses', args.output)
+        plot_losses(AE_losses, f'{args.model_training}_{frac}_Autoencoder_MSE_Losses', args.output)
 
         classifiers, classifier_losses, classifier_accuracies = train_classifier(
             models=encoders,
@@ -47,8 +48,8 @@ def main(args):
             data_fraction=frac,
             adj_matrix=A)
         
-        plot_losses(classifier_losses, f'Autoencoder_{args.classifier_training}_frac_Classifier_Losses', args.output)
-        plot_accuracies(classifier_accuracies, f'Autoencoder_{args.classifier_training}_frac_Classifier_Accuracies', args.output)
+        plot_losses(classifier_losses, f'Autoencoder_{args.classifier_training}_{frac}_Classifier_Losses', args.output)
+        plot_accuracies(classifier_accuracies, f'Autoencoder_{args.classifier_training}_{frac}_Classifier_Accuracies', args.output)
 
         test_accuracies, confusion_matrices = test_classifier(
             models=encoders,
@@ -62,7 +63,8 @@ def main(args):
         save_accuracies(test_accuracies, args.output, frac)
 
 def train_AE(mode: str,  
-             batch_size: int, 
+             batch_size: int,
+             dataset: str,
              epochs: int, 
              encoded_dim: int, 
              optimizer: str,
@@ -78,9 +80,13 @@ def train_AE(mode: str,
             transforms.RandomHorizontalFlip(p=0.3),
             transforms.ToTensor()
         ])
-    
-    trainloaders = prepare_CIFAR(mode=mode, batch_size=batch_size, train_transform=train_transform, train=True, iid=True, data_fraction=data_fraction)
-    channels=3
+
+    if dataset=='MNIST':
+        channels = 1
+        trainloaders = prepare_MNIST(mode=mode, batch_size=batch_size, train_transform=train_transform, train=True, iid=True, data_fraction=data_fraction)
+    elif dataset=='CIFAR':
+        trainloaders = prepare_CIFAR(mode=mode, batch_size=batch_size, train_transform=train_transform, train=True, iid=True, data_fraction=data_fraction)
+        channels=3
 
     worker_losses = {0: [], 1: [], 2: [], 3: [], 4: []}
     encoders = [Encoder(channels, encoded_dim).to(device) for _ in range(n_workers)]
