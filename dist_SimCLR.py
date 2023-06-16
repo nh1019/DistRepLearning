@@ -6,10 +6,8 @@ from tqdm import tqdm
 import numpy as np
 
 from models.contrastive_learning import SimCLR, InfoNCELoss, TwoCropsTransform
-from models.autoencoder import Encoder
-from utils.earlystopping import EarlyStopper
 from utils.aggregate import aggregate, generate_graph
-from utils.prepare_dataloaders import prepare_MNIST, prepare_CIFAR
+from utils.prepare_dataloaders import prepare_CIFAR
 from utils.save_config import save_config
 from utils.dist_plotting import *
 from classifiers.dist_classifier import *
@@ -18,43 +16,46 @@ def main(args):
     save_config(args)
     torch.manual_seed(0)
     np.random.seed(2)
-
     A = generate_graph(5, args.topology)
 
-    encoders, losses = train_simCLR(
-        mode=args.model_training,
-        batch_size=256,
-        epochs=args.model_epochs,
-        encoded_dim=args.encoded_dim,
-        adj_matrix=A)
-    
-    plot_losses(losses, f'{args.model_training}_SimCLR_Losses', args.output)
-    
-    classifiers, classifier_losses, classifier_accuracies = train_classifier(
-        models=encoders,
-        dataset=args.dataset,
-        mode=args.classifier_training,
-        epochs=args.classifier_epochs,
-        batch_size=16,
-        optimizer='Adam',
-        warmup_epochs=0,
-        scheduler=False,
-        encoded_dim=args.encoded_dim,
-        adj_matrix=A)
-    
-    plot_losses(classifier_losses, f'{args.model_training}_SimCLR_{args.classifier_training}_Classifier_Losses', args.output)
-    plot_accuracies(classifier_accuracies, f'{args.model_training}_SimCLR_{args.classifier_training}_Classifier_Accuracies', args.output)
+    fracs = [0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.75]
+    for frac in fracs:
+        encoders, losses = train_simCLR(
+            mode=args.model_training,
+            batch_size=256,
+            epochs=args.model_epochs,
+            encoded_dim=args.encoded_dim,
+            adj_matrix=A,
+            data_fraction=frac)
+        
+        plot_losses(losses, f'{args.model_training}_{frac}_SimCLR_Losses', args.output)
+        
+        classifiers, classifier_losses, classifier_accuracies = train_classifier(
+            models=encoders,
+            dataset=args.dataset,
+            mode=args.classifier_training,
+            epochs=args.classifier_epochs,
+            batch_size=16,
+            optimizer='Adam',
+            warmup_epochs=0,
+            scheduler=False,
+            encoded_dim=args.encoded_dim,
+            adj_matrix=A,
+            data_fraction=frac)
+        
+        plot_losses(classifier_losses, f'{args.model_training}_{frac}_SimCLR_{args.classifier_training}_Classifier_Losses', args.output)
+        plot_accuracies(classifier_accuracies, f'{args.model_training}_SimCLR_{frac}_{args.classifier_training}_Classifier_Accuracies', args.output)
 
-    test_accuracies, confusion_matrices = test_classifier(
-        models=encoders,
-        classifier=classifiers,
-        dataset=args.dataset,
-        mode=args.testing)
-    
-    for i, cm in enumerate(confusion_matrices):
-        plot_confusion_matrix(cm, args.dataset, args.output, i)
-    
-    save_accuracies(test_accuracies, args.output)
+        test_accuracies, confusion_matrices = test_classifier(
+            models=encoders,
+            classifier=classifiers,
+            dataset=args.dataset,
+            mode=args.testing)
+        
+        for i, cm in enumerate(confusion_matrices):
+            plot_confusion_matrix(cm, args.dataset, args.output, i)
+        
+        save_accuracies(test_accuracies, args.output, frac)
 
 def train_simCLR(mode: str, 
                  epochs: int, 
@@ -63,6 +64,7 @@ def train_simCLR(mode: str,
                  encoded_dim: 
                  int=128, 
                  lr: float=3e-4, 
+                 data_fraction: float=1.,
                  device: str='cuda:0', 
                  n_workers: int=5):
     
@@ -77,7 +79,7 @@ def train_simCLR(mode: str,
 
     worker_losses = {0: [], 1: [], 2: [], 3: [], 4: []}
     
-    trainloaders = prepare_CIFAR(mode, batch_size, TwoCropsTransform(train_transform))
+    trainloaders = prepare_CIFAR(mode, batch_size, TwoCropsTransform(train_transform), data_fraction=data_fraction)
 
     models = [SimCLR(out_dim=encoded_dim).to(device) for _ in range(n_workers)]
     optimizers = [torch.optim.Adam(model.parameters(), lr=lr, weight_decay=1e-4) for model in models]

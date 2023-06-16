@@ -10,7 +10,6 @@ from models.autoencoder import Encoder
 from models.linear_classifier import LinearClassifier
 from utils.prepare_dataloaders import prepare_MNIST, prepare_CIFAR
 from utils.aggregate import aggregate, generate_graph
-from utils.earlystopping import EarlyStopper
 from utils.save_config import save_config
 from utils.dist_plotting import plot_losses, plot_accuracies, save_accuracies
 from classifiers.dist_classifier import test_binary_classifier
@@ -19,44 +18,54 @@ def main(args):
     save_config(args)
     torch.manual_seed(2)
     np.random.seed(2)
-
-    #generate graph of worker nodes
     A = generate_graph(5, args.topology)
 
-    encoders, classifiers, _, classifier_losses, classifier_accuracies = train_EC(
-        encoder_mode=args.model_training,
-        classifier_mode=args.classifier_training,
-        dataset=args.dataset,
-        batch_size=16,
-        epochs=args.model_epochs,
-        encoded_dim=args.encoded_dim,
-        adj_matrix=A)
+    fracs = [0.01, 0.02, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.75]
+    for frac in fracs:
+        encoders, classifiers, _, classifier_losses, classifier_accuracies = train_EC(
+            encoder_mode=args.model_training,
+            classifier_mode=args.classifier_training,
+            dataset=args.dataset,
+            batch_size=16,
+            epochs=args.model_epochs,
+            encoded_dim=args.encoded_dim,
+            adj_matrix=A,
+            data_fraction=frac)
+        
+        plot_losses(classifier_losses, f'{args.model_training}_{frac}_Encoder_Classifier_Losses', args.output)
+        plot_accuracies(classifier_accuracies, f'{args.model_training}_{frac}_Encoder_Classifier_Accuracies', args.output)
+
+        test_accuracies = test_binary_classifier(encoders, 
+                                        classifiers, 
+                                        args.dataset, 
+                                        args.testing)
+
+        save_accuracies(test_accuracies, args.output, frac)
+
+
+def train_EC(encoder_mode: str, 
+             classifier_mode: str, 
+             dataset: str, 
+             batch_size: int, 
+             epochs: int, 
+             encoded_dim: int, 
+             adj_matrix, 
+             lr: float=1e-3,
+             data_fraction: float=1., 
+             device: str='cuda:0', 
+             n_workers: int=5):
     
-    plot_losses(classifier_losses, f'{args.model_training}_Encoder_Classifier_Losses', args.output)
-    plot_accuracies(classifier_accuracies, f'{args.model_training}_Encoder_Classifier_Accuracies', args.output)
-
-    test_accuracies = test_binary_classifier(encoders, 
-                                      classifiers, 
-                                      args.dataset, 
-                                      args.testing)
-
-    save_accuracies(test_accuracies, args.output)
-
-
-def train_EC(encoder_mode: str, classifier_mode: str, dataset: str, batch_size: int, epochs: int, encoded_dim: int, adj_matrix, lr: float=1e-3, device: str='cuda:0', n_workers: int=5):
     train_transform = transforms.Compose([
             transforms.RandomHorizontalFlip(p=0.3),
             transforms.ToTensor()
         ])
-
-    #es = EarlyStopper(min_delta=0.5)
 
     if dataset=='MNIST':
         channels = 1
         trainloaders = prepare_MNIST(encoder_mode, batch_size, train_transform)
     elif dataset=='CIFAR':
         channels = 3
-        trainloaders = prepare_CIFAR(encoder_mode, batch_size, train_transform)
+        trainloaders = prepare_CIFAR(encoder_mode, batch_size, train_transform, data_fraction=data_fraction)
 
     encoders = [Encoder(channels, encoded_dim).to(device) for _ in range(n_workers)]
     classifiers = [LinearClassifier(encoded_dim, 2).to(device) for _ in range(n_workers)]
@@ -119,12 +128,6 @@ def train_EC(encoder_mode: str, classifier_mode: str, dataset: str, batch_size: 
                     classifier_losses[k].append(avg_train_loss)
                     classifier_accuracies[k].append(avg_train_acc)
 
-        '''
-        curr_average = np.mean([classifier_losses[k][epoch] for k in classifier_losses.keys()])
-        if es.early_stop(curr_average):
-            print(f'Stopped training model after epoch {epoch}.')
-            break
-        '''
         for i in range(n_workers):
             schedulers[i].step()
 

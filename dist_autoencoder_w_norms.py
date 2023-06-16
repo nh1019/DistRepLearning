@@ -10,7 +10,8 @@ from utils.prepare_dataloaders import prepare_MNIST, prepare_CIFAR
 from utils.aggregate import aggregate, generate_graph
 from utils.dist_plotting import *
 from utils.save_config import save_config
-from classifiers.dist_classifier import *
+from classifiers.dist_classifier_w_norms import *
+from utils.calc_norms import calculate_mean_norm
 
 def main(args):
     save_config(args)
@@ -18,49 +19,47 @@ def main(args):
     np.random.seed(2)
     A = generate_graph(5, args.topology)
 
-    fracs = [0.01, 0.02, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.75]
-    for frac in fracs:
-        encoders, AE_losses, encoded_dim = train_AE(
-            mode=args.model_training,
-            dataset=args.dataset,
-            batch_size=16,
-            epochs=args.model_epochs,
-            encoded_dim=args.encoded_dim,
-            optimizer=args.optimizer,
-            warmup_epochs=args.warmup_epochs,
-            scheduler=args.scheduler,
-            adj_matrix=A,
-            data_fraction=frac)
-        
-        plot_losses(AE_losses, f'{args.model_training}_Autoencoder_{frac}_MSE_Losses', args.output)
+    encoders, AE_losses, encoded_dim, norms = train_AE(
+        mode=args.model_training,
+        dataset=args.dataset,
+        batch_size=16,
+        epochs=args.model_epochs,
+        encoded_dim=args.encoded_dim,
+        optimizer=args.optimizer,
+        warmup_epochs=args.warmup_epochs,
+        scheduler=args.scheduler,
+        adj_matrix=A)
+    
+    plot_losses(AE_losses, f'{args.model_training}_Autoencoder_MSE_Losses', args.output)
+    plot_norms(norms, type='Encoder', output_dir=args.output)
 
-        classifiers, classifier_losses, classifier_accuracies = train_classifier(
-            models=encoders,
-            dataset=args.dataset,
-            mode=args.classifier_training,
-            epochs=args.classifier_epochs,
-            batch_size=16,
-            encoded_dim=encoded_dim,
-            optimizer=args.optimizer,
-            warmup_epochs=args.warmup_epochs,
-            scheduler=args.scheduler,
-            testing=args.testing,
-            data_fraction=frac,
-            adj_matrix=A)
-        
-        plot_losses(classifier_losses, f'Autoencoder_{args.classifier_training}_{frac}_Classifier_Losses', args.output)
-        plot_accuracies(classifier_accuracies, f'Autoencoder_{args.classifier_training}_{frac}_Classifier_Accuracies', args.output)
+    classifiers, classifier_losses, classifier_accuracies, classifier_norms = train_classifier(
+        models=encoders,
+        dataset=args.dataset,
+        mode=args.classifier_training,
+        epochs=args.classifier_epochs,
+        batch_size=16,
+        encoded_dim=encoded_dim,
+        optimizer=args.optimizer,
+        warmup_epochs=args.warmup_epochs,
+        scheduler=args.scheduler,
+        testing=args.testing,
+        adj_matrix=A)
+    
+    plot_losses(classifier_losses, f'Autoencoder_{args.classifier_training}_Classifier_Losses', args.output)
+    plot_accuracies(classifier_accuracies, f'Autoencoder_{args.classifier_training}_Classifier_Accuracies', args.output)
+    plot_norms(classifier_norms, type='Classifier', output_dir=args.output)
 
-        test_accuracies, confusion_matrices = test_classifier(
-            models=encoders,
-            classifier=classifiers,
-            dataset=args.dataset,
-            mode=args.testing)
-        
-        for i, cm in enumerate(confusion_matrices):
-            plot_confusion_matrix(cm, args.dataset, args.output, i)
-        
-        save_accuracies(test_accuracies, args.output, frac)
+    test_accuracies, confusion_matrices = test_classifier(
+        models=encoders,
+        classifier=classifiers,
+        dataset=args.dataset,
+        mode=args.testing)
+    
+    for i, cm in enumerate(confusion_matrices):
+        plot_confusion_matrix(cm, args.dataset, args.output, i)
+    
+    save_accuracies(test_accuracies, args.output)
 
 def train_AE(mode: str, 
              dataset: str, 
@@ -86,9 +85,10 @@ def train_AE(mode: str,
         trainloaders = prepare_MNIST(mode, batch_size, train_transform, data_fraction=data_fraction)
     elif dataset=='CIFAR':
         channels = 3
-        trainloaders = prepare_CIFAR(mode, batch_size, train_transform, data_fraction=data_fraction)
+        trainloaders = prepare_CIFAR(mode, batch_size, train_transform)
 
     worker_losses = {0: [], 1: [], 2: [], 3: [], 4: []}
+    norms = []
     encoders = [Encoder(channels, encoded_dim).to(device) for _ in range(n_workers)]
     decoders = [Decoder(channels, encoded_dim).to(device) for _ in range(n_workers)]
     
@@ -175,7 +175,9 @@ def train_AE(mode: str,
             encoders = aggregate(n_workers, encoders, adj_matrix)
             decoders = aggregate(n_workers, decoders, adj_matrix)
 
-    return encoders, worker_losses, encoded_dim
+        norms.append(calculate_mean_norm(encoders))
+
+    return encoders, worker_losses, encoded_dim, norms
 
 if __name__=='__main__':
     parser = argparse.ArgumentParser()

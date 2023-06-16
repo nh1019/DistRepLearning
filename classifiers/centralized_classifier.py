@@ -18,6 +18,7 @@ def train_classifier(model,
                      optimizer: str,
                      warmup_epochs: int,
                      scheduler: bool,
+                     data_fraction: float=1.,
                      train_transform=None, 
                      lr: float=1e-3, 
                      device: str='cuda:0'):
@@ -28,9 +29,9 @@ def train_classifier(model,
         ])
 
     if dataset=='MNIST':
-        trainloader = prepare_MNIST(mode, batch_size, train_transform)
+        trainloader = prepare_MNIST(mode, batch_size, train_transform, data_fraction=data_fraction)
     elif dataset=='CIFAR':
-        trainloader = prepare_CIFAR(mode, batch_size, train_transform)
+        trainloader = prepare_CIFAR(mode, batch_size, train_transform, data_fraction=data_fraction)
 
     if warmup_epochs:
         desired_lr = lr

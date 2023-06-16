@@ -43,8 +43,13 @@ def plot_accuracies(accuracies: list, title: str, output_dir=None):
     else:
         plt.show()
 
-def save_accuracy(accuracy, output):
-    with open(os.path.join(output, 'test_accuracy'), 'w') as f:
+def save_accuracy(accuracy, output, frac=None):
+    if frac is not None:
+        fname = f'test_accuracy_{frac}'
+    else:
+        fname = 'test_accuracy'
+
+    with open(os.path.join(output, fname), 'w') as f:
         f.write(str(accuracy))
 
 

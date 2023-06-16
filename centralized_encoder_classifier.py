@@ -8,27 +8,28 @@ from torchvision.transforms import transforms
 from models.autoencoder import Encoder
 from models.linear_classifier import LinearClassifier
 from utils.prepare_dataloaders import prepare_MNIST, prepare_CIFAR
-from utils.earlystopping import EarlyStopper
 from utils.save_config import save_config
 from utils.centralized_plotting import *
 from classifiers.centralized_classifier import *
 
 def main(args):
     save_config(args)
+    fracs = [0.01, 0.02, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.75]
+    for frac in fracs:
+        encoder, classifier, _, classifier_losses, classifier_accuracies = train_EC(
+            mode=args.model_training,
+            dataset=args.dataset,
+            batch_size=16,
+            epochs=args.model_epochs,
+            encoded_dim=args.encoded_dim,
+            data_fraction=frac)
+        
+        plot_losses(classifier_losses, f'{args.model_training}__{frac}_Encoder_Classifier_Losses', args.output)
+        plot_accuracies(classifier_accuracies, f'{args.model_training}_{frac}_Encoder_Classifier_Accuracies', args.output)
 
-    encoder, classifier, _, classifier_losses, classifier_accuracies = train_EC(
-        mode=args.model_training,
-        dataset=args.dataset,
-        batch_size=16,
-        epochs=args.model_epochs,
-        encoded_dim=args.encoded_dim)
-    
-    plot_losses(classifier_losses, f'{args.model_training}_Encoder_Classifier_Losses', args.output)
-    plot_accuracies(classifier_accuracies, f'{args.model_training}_Encoder_Classifier_Accuracies', args.output)
+        test_accuracy = test_classifier(encoder, classifier, args.dataset, args.testing)
 
-    test_accuracy = test_classifier(encoder, classifier, args.dataset, args.testing)
-
-    save_accuracy(test_accuracy, args.output)
+        save_accuracy(test_accuracy, args.output, frac)
 
 
 def train_EC(mode: str, 
@@ -37,6 +38,7 @@ def train_EC(mode: str,
              epochs: int, 
              encoded_dim: int, 
              lr: float=1e-3, 
+             data_fraction: float=1.,
              device: str='cuda:0'):
     
     train_transform = transforms.Compose([
@@ -51,7 +53,7 @@ def train_EC(mode: str,
         trainloader = prepare_MNIST(mode, batch_size, train_transform)
     elif dataset=='CIFAR':
         channels = 3
-        trainloader = prepare_CIFAR(mode, batch_size, train_transform)
+        trainloader = prepare_CIFAR(mode, batch_size, train_transform, data_fraction=data_fraction)
 
     encoder = Encoder(channels, encoded_dim).to(device)
     classifier = LinearClassifier(encoded_dim, 10).to(device)
@@ -97,12 +99,6 @@ def train_EC(mode: str,
                 classifier_accuracies.append(avg_train_acc)
 
         scheduler.step()
-
-        '''
-        if es.early_stop(avg_train_loss):
-            print(f'Stopped training model after epoch {epoch}.')
-            break
-        '''
 
     return encoder, classifier, encoded_dim, classifier_losses, classifier_accuracies
 

@@ -7,7 +7,6 @@ from tqdm import tqdm
 
 from utils.prepare_dataloaders import prepare_CIFAR, prepare_MNIST
 from models.autoencoder import Encoder, Decoder
-from utils.earlystopping import EarlyStopper
 from utils.save_config import save_config
 from utils.centralized_plotting import *
 from classifiers.centralized_classifier import *
@@ -15,39 +14,43 @@ from classifiers.centralized_classifier import *
 def main(args):
     save_config(args)
 
-    encoder, AE_losses, encoded_dim = train_AE(
-        mode=args.model_training,
-        dataset=args.dataset,
-        batch_size=16,
-        epochs=args.model_epochs,
-        encoded_dim=args.encoded_dim,
-        optimizer=args.optimizer,
-        warmup_epochs=args.warmup_epochs,
-        scheduler=args.scheduler)
-    
-    plot_losses(AE_losses, f'{args.model_training}_Autoencoder_MSE_Losses', args.output)
+    fracs = [0.01, 0.02, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.75]
+    for frac in fracs:
+        encoder, AE_losses, encoded_dim = train_AE(
+            mode=args.model_training,
+            dataset=args.dataset,
+            batch_size=16,
+            epochs=args.model_epochs,
+            encoded_dim=args.encoded_dim,
+            optimizer=args.optimizer,
+            data_fraction=frac,
+            warmup_epochs=args.warmup_epochs,
+            scheduler=args.scheduler)
+        
+        plot_losses(AE_losses, f'{args.model_training}_{frac}_Autoencoder_MSE_Losses', args.output)
 
-    classifier, classifier_losses, classifier_accuracies = train_classifier(
-        model=encoder,
-        dataset=args.dataset,
-        mode=args.classifier_training,
-        epochs=args.classifier_epochs,
-        batch_size=16,
-        encoded_dim=encoded_dim,
-        optimizer=args.optimizer,
-        warmup_epochs=args.warmup_epochs,
-        scheduler=args.scheduler)
-    
-    plot_losses(classifier_losses, f'Autoencoder_{args.classifier_training}_Classifier_Losses', args.output)
-    plot_accuracies(classifier_accuracies, f'Autoencoder_{args.classifier_training}_Classifier_Accuracies', args.output)
+        classifier, classifier_losses, classifier_accuracies = train_classifier(
+            model=encoder,
+            dataset=args.dataset,
+            mode=args.classifier_training,
+            epochs=args.classifier_epochs,
+            batch_size=16,
+            encoded_dim=encoded_dim,
+            optimizer=args.optimizer,
+            data_fraction=frac,
+            warmup_epochs=args.warmup_epochs,
+            scheduler=args.scheduler)
+        
+        plot_losses(classifier_losses, f'Autoencoder_{args.classifier_training}_{frac}_Classifier_Losses', args.output)
+        plot_accuracies(classifier_accuracies, f'Autoencoder_{args.classifier_training}_{frac}_Classifier_Accuracies', args.output)
 
-    test_accuracies = test_classifier(
-        model=encoder,
-        classifier=classifier,
-        dataset=args.dataset,
-        mode=args.testing)
-    
-    save_accuracy(test_accuracies, args.output)
+        test_accuracies = test_classifier(
+            model=encoder,
+            classifier=classifier,
+            dataset=args.dataset,
+            mode=args.testing)
+        
+        save_accuracy(test_accuracies, args.output, frac)
 
 
 def train_AE(mode: str, 
@@ -58,6 +61,7 @@ def train_AE(mode: str,
              optimizer: str, 
              warmup_epochs: int, 
              scheduler: bool,
+             data_fraction: float=1.,
              lr: float=1e-4, 
              device: str='cuda:0'):
     
@@ -68,10 +72,10 @@ def train_AE(mode: str,
     
     if dataset=='MNIST':
         channels = 1
-        trainloader = prepare_MNIST(mode, batch_size, train_transform)
+        trainloader = prepare_MNIST(mode, batch_size, train_transform, data_fraction=data_fraction)
     elif dataset=='CIFAR':
         channels = 3
-        trainloader = prepare_CIFAR(mode, batch_size, train_transform)
+        trainloader = prepare_CIFAR(mode, batch_size, train_transform, data_fraction=data_fraction)
 
     epoch_losses = []
     encoder = Encoder(channels, encoded_dim).to(device)
@@ -141,13 +145,6 @@ def train_AE(mode: str,
 
         if scheduler:
                 sched.step(avg_train_loss)
-
-    '''
-    #check whether to stop early 
-        if es.early_stop(avg_train_loss):
-            print(f'Stopped training autoencoder after epoch {epoch}.')
-            break
-    '''
 
     return encoder, epoch_losses, encoded_dim
 

@@ -72,8 +72,13 @@ def plot_confusion_matrix(cm, dataset, output_dir, worker):
     plt.savefig(filename)
 
 
-def save_accuracies(accuracies, output):
-    with open(os.path.join(output, 'test_accuracies'), 'w') as f:
+def save_accuracies(accuracies, output, frac=None):
+    if frac is not None:
+        fname = f'test_accuracies_{frac}'
+    else: 
+        fname = 'test_accuracies'
+
+    with open(os.path.join(output, fname), 'w') as f:
         for key in accuracies.keys():
             f.write('{},{:.2f}\n'.format(key, accuracies[key]))
 
