@@ -59,7 +59,7 @@ def main(args):
         for i, cm in enumerate(confusion_matrices):
             plot_confusion_matrix(cm, args.dataset, args.output, i)
         
-        save_accuracies(test_accuracies, args.output)
+        save_accuracies(test_accuracies, args.output, frac)
 
 def train_AE(mode: str,  
              batch_size: int, 
