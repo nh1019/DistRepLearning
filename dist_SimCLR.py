@@ -18,45 +18,44 @@ def main(args):
     np.random.seed(2)
     A = generate_graph(5, args.topology)
 
-    fracs = [0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.75]
-    for frac in fracs:
-        encoders, losses = train_simCLR(
-            mode=args.model_training,
-            batch_size=256,
-            epochs=args.model_epochs,
-            encoded_dim=args.encoded_dim,
-            adj_matrix=A,
-            data_fraction=frac)
-        
-        plot_losses(losses, f'{args.model_training}_{frac}_SimCLR_Losses', args.output)
-        
-        classifiers, classifier_losses, classifier_accuracies = train_classifier(
-            models=encoders,
-            dataset=args.dataset,
-            mode=args.classifier_training,
-            epochs=args.classifier_epochs,
-            batch_size=16,
-            optimizer='Adam',
-            warmup_epochs=0,
-            scheduler=False,
-            encoded_dim=args.encoded_dim,
-            adj_matrix=A,
-            data_fraction=frac,
-            testing=args.testing)
-        
-        plot_losses(classifier_losses, f'{args.model_training}_{frac}_SimCLR_{args.classifier_training}_Classifier_Losses', args.output)
-        plot_accuracies(classifier_accuracies, f'{args.model_training}_SimCLR_{frac}_{args.classifier_training}_Classifier_Accuracies', args.output)
+    frac = args.data_fraction
+    encoders, losses = train_simCLR(
+        mode=args.model_training,
+        batch_size=256,
+        epochs=args.model_epochs,
+        encoded_dim=args.encoded_dim,
+        adj_matrix=A,
+        data_fraction=frac)
+    
+    plot_losses(losses, f'{args.model_training}_{frac}_SimCLR_Losses', args.output)
+    
+    classifiers, classifier_losses, classifier_accuracies = train_classifier(
+        models=encoders,
+        dataset=args.dataset,
+        mode=args.classifier_training,
+        epochs=args.classifier_epochs,
+        batch_size=16,
+        optimizer='Adam',
+        warmup_epochs=0,
+        scheduler=False,
+        encoded_dim=args.encoded_dim,
+        adj_matrix=A,
+        data_fraction=frac,
+        testing=args.testing)
+    
+    plot_losses(classifier_losses, f'{args.model_training}_{frac}_SimCLR_{args.classifier_training}_Classifier_Losses', args.output)
+    plot_accuracies(classifier_accuracies, f'{args.model_training}_SimCLR_{frac}_{args.classifier_training}_Classifier_Accuracies', args.output)
 
-        test_accuracies, confusion_matrices = test_classifier(
-            models=encoders,
-            classifier=classifiers,
-            dataset=args.dataset,
-            mode=args.testing)
-        
-        for i, cm in enumerate(confusion_matrices):
-            plot_confusion_matrix(cm, args.dataset, args.output, i)
-        
-        save_accuracies(test_accuracies, args.output, frac)
+    test_accuracies, confusion_matrices = test_classifier(
+        models=encoders,
+        classifier=classifiers,
+        dataset=args.dataset,
+        mode=args.testing)
+    
+    for i, cm in enumerate(confusion_matrices):
+        plot_confusion_matrix(cm, args.dataset, args.output, i)
+    
+    save_accuracies(test_accuracies, args.output, frac)
 
 def train_simCLR(mode: str, 
                  epochs: int, 
