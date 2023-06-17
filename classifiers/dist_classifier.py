@@ -41,7 +41,7 @@ def train_classifier(models,
     if dataset=='MNIST':
         trainloaders = prepare_MNIST(mode=mode, batch_size=batch_size, train_transform=train_transform, data_fraction=data_fraction)
     elif dataset=='CIFAR':
-        trainloaders = prepare_CIFAR(mode=mode, batch_size=batch_size, train_transform=train_transform, data_fraction=data_fraction)
+        trainloaders, _ = prepare_CIFAR(mode=mode, batch_size=batch_size, train_transform=train_transform, data_fraction=data_fraction)
         
     classifiers = [LinearClassifier(encoded_dim, 10).to(device) for _ in range(n_workers)]
     criterion = nn.CrossEntropyLoss()
