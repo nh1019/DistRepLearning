@@ -106,7 +106,7 @@ def prepare_CIFAR(mode: str, batch_size: int, data_fraction: float=1., train_tra
                 for i in range(len(worker_datasets)):
                     trainloaders.append(DataLoader(worker_datasets[i], batch_size, shuffle=True, drop_last=True))
 
-            return trainloaders
+            return trainloaders, bs
     
     else:
         test_dataset = datasets.CIFAR10(root='./data', train=False, transform=test_transform, download=True)
