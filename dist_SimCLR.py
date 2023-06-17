@@ -133,6 +133,7 @@ if __name__=='__main__':
     parser.add_argument('--dataset', type=str, help='choose between MNIST and CIFAR (CIFAR-10)', required=True)
     parser.add_argument('--output', type=str, help='specify a folder for output files', required=True)
     parser.add_argument('--topology', type=str, help='choose a network topology to organise worker nodes', default='random')
+    parser.add_argument('--data_fraction', type=float, default=1., help='to test with limited dataset size. pick a value between 0 and 1.')
 
     args = parser.parse_args()
 
