@@ -17,42 +17,41 @@ def main(args):
     torch.manual_seed(0)
     np.random.seed(2)
 
-    fracs = [0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.75]
-    for frac in fracs:
-        encoders, losses = train_simCLR(
-            mode=args.model_training,
-            batch_size=256,
-            epochs=args.model_epochs,
-            optimizer=args.optimizer,
-            warmup_epochs=args.warmup_epochs,
-            scheduler=args.scheduler,
-            encoded_dim=args.encoded_dim,
-            data_fraction=frac)
-        
-        plot_losses(losses, f'{args.model_training}__{frac}_SimCLR_Losses', args.output)
-        
-        classifier, classifier_losses, classifier_accuracies = train_classifier(
-            model=encoders,
-            dataset=args.dataset,
-            mode=args.classifier_training,
-            epochs=args.classifier_epochs,
-            batch_size=16,
-            optimizer=args.optimizer,
-            warmup_epochs=args.warmup_epochs,
-            scheduler=args.scheduler,
-            encoded_dim=args.encoded_dim,
-            data_fraction=frac)
-        
-        plot_losses(classifier_losses, f'{args.model_training}_{frac}_SimCLR_{args.classifier_training}_Classifier_Losses', args.output)
-        plot_accuracies(classifier_accuracies, f'{args.model_training}_{frac}_SimCLR_{args.classifier_training}_Classifier_Accuracies', args.output)
+    frac = args.data_fraction
+    encoders, losses = train_simCLR(
+        mode=args.model_training,
+        batch_size=256,
+        epochs=args.model_epochs,
+        optimizer=args.optimizer,
+        warmup_epochs=args.warmup_epochs,
+        scheduler=args.scheduler,
+        encoded_dim=args.encoded_dim,
+        data_fraction=frac)
+    
+    plot_losses(losses, f'{args.model_training}__{frac}_SimCLR_Losses', args.output)
+    
+    classifier, classifier_losses, classifier_accuracies = train_classifier(
+        model=encoders,
+        dataset=args.dataset,
+        mode=args.classifier_training,
+        epochs=args.classifier_epochs,
+        batch_size=16,
+        optimizer=args.optimizer,
+        warmup_epochs=args.warmup_epochs,
+        scheduler=args.scheduler,
+        encoded_dim=args.encoded_dim,
+        data_fraction=frac)
+    
+    plot_losses(classifier_losses, f'{args.model_training}_{frac}_SimCLR_{args.classifier_training}_Classifier_Losses', args.output)
+    plot_accuracies(classifier_accuracies, f'{args.model_training}_{frac}_SimCLR_{args.classifier_training}_Classifier_Accuracies', args.output)
 
-        test_accuracies = test_classifier(
-            model=encoders,
-            classifier=classifier,
-            dataset=args.dataset,
-            mode=args.testing)
-        
-        save_accuracy(test_accuracies, args.output, frac)
+    test_accuracies = test_classifier(
+        model=encoders,
+        classifier=classifier,
+        dataset=args.dataset,
+        mode=args.testing)
+    
+    save_accuracy(test_accuracies, args.output, frac)
 
 def train_simCLR(mode: str, 
                  epochs: int, 
