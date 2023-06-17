@@ -162,6 +162,7 @@ if __name__=='__main__':
     parser.add_argument('--optimizer', type=str, help='choose between SGD, Adam, and AdamW', required=True)
     parser.add_argument('--warmup_epochs', type=int, default=0)
     parser.add_argument('--scheduler', action='store_true', default=False)
+    parser.add_argument('--data_fraction', type=float, default=1., help='to test with limited dataset size. pick a value between 0 and 1.')
 
     args = parser.parse_args()
 
