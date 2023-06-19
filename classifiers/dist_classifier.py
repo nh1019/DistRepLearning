@@ -140,7 +140,7 @@ def test_classifier(models,
         models[i].eval()
         classifiers[i].eval()
 
-    #plot_tsne(models, dataset)
+    plot_tsne(models, dataset)
 
     if dataset=='MNIST':
         testloaders = prepare_MNIST(mode, batch_size=8, train=False)
