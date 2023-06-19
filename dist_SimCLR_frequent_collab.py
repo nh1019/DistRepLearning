@@ -91,22 +91,22 @@ def train_simCLR(mode: str,
         model.train()
 
     for epoch in range(epochs):
-      for step in range(len(trainloader[0])):
-        for k in range(n_workers):
-            (images, _) = next(iter(trainloaders[k]))
-              images = torch.cat(images, dim=0)
-              images = images.to(device)
-
-              optimizers[k].zero_grad()
-              features = models[k](images)
-              logits, labels = custom_loss(features)
-              loss = criterion(logits, labels)
-              curr_loss.append(loss.item())
-
-              loss.backward()
-              optimizers[k].step()
+        for step in range(len(trainloader[0])):
+            for k in range(n_workers):
+                (images, _) = next(iter(trainloaders[k]))
+                images = torch.cat(images, dim=0)
+                images = images.to(device)
+                
+                optimizers[k].zero_grad()
+                features = models[k](images)
+                logits, labels = custom_loss(features)
+                loss = criterion(logits, labels)
+                curr_loss.append(loss.item())
+                
+                loss.backward()
+                optimizers[k].step()
          
-        models = aggregate(n_workers, models, adj_matrix)
+            models = aggregate(n_workers, models, adj_matrix)
                 
       for scheduler in schedulers:
           scheduler.step()
