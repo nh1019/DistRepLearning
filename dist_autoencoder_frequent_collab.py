@@ -139,7 +139,7 @@ def train_AE(mode: str,
         schedulers = [torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, patience=5, factor=0.5, verbose=True) for optimizer in optimizers]
 
     for epoch in range(epochs):
-        for step in range(1000):
+        for step in range(len(trainloaders[0])):
             for k in range(n_workers):
                 (features, _) = next(iter(trainloaders[k]))
                 features = features.to(device)
