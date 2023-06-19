@@ -101,7 +101,7 @@ def train_simCLR(mode: str,
                 features = models[k](images)
                 logits, labels = custom_loss(features)
                 loss = criterion(logits, labels)
-                curr_loss.append(loss.item())
+                worker_losses[k].append(loss.item())
                 
                 loss.backward()
                 optimizers[k].step()
