@@ -29,7 +29,7 @@ def main(args):
         scheduler=args.scheduler,
         adj_matrix=A)
         
-    plot_losses(AE_losses, f'{args.model_training}_Autoencoder_{frac}_MSE_Losses', args.output)
+    plot_losses(AE_losses, f'{args.model_training}_Autoencoder_MSE_Losses', args.output)
 
     classifiers, classifier_losses, classifier_accuracies = train_classifier(
         models=encoders,
@@ -82,7 +82,7 @@ def train_AE(mode: str,
         trainloaders = prepare_MNIST(mode=mode, batch_size=batch_size, train_transform=train_transform, data_fraction=data_fraction)
     elif dataset=='CIFAR':
         channels = 3
-        trainloaders = prepare_CIFAR(mode=mode, batch_size=batch_size, train_transform=train_transform, data_fraction=data_fraction)
+        trainloaders, _ = prepare_CIFAR(mode=mode, batch_size=batch_size, train_transform=train_transform, data_fraction=data_fraction)
 
     worker_losses = {0: [], 1: [], 2: [], 3: [], 4: []}
     encoders = [Encoder(channels, encoded_dim).to(device) for _ in range(n_workers)]
@@ -139,29 +139,29 @@ def train_AE(mode: str,
         schedulers = [torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, patience=5, factor=0.5, verbose=True) for optimizer in optimizers]
 
     for epoch in range(epochs):
-        for k in range(n_workers):
-            (features, _) = next(iter(trainloaders[k]))
-            features = features.to(device)
-
-            optimizers[k].zero_grad()
-            encoded = encoders[k](features)
-            decoded = decoders[k](encoded)
-
-            loss = criterion(decoded, features)
-            loss.backward()
-            optimizers[k].step()
-            worker_losses[k].append(loss.item())
-
+        for step in range(1000):
+            for k in range(n_workers):
+                (features, _) = next(iter(trainloaders[k]))
+                features = features.to(device)
+    
+                optimizers[k].zero_grad()
+                encoded = encoders[k](features)
+                decoded = decoders[k](encoded)
+    
+                loss = criterion(decoded, features)
+                loss.backward()
+                optimizers[k].step()
+                worker_losses[k].append(loss.item())
+                
+        if mode=='collaborative':
+            encoders = aggregate(n_workers, encoders, adj_matrix)
+            decoders = aggregate(n_workers, decoders, adj_matrix)
         
         #check whether to stop early 
         curr_average = np.mean([worker_losses[k][epoch] for k in worker_losses.keys()])
         if scheduler:
             for k in range(n_workers):
                 schedulers[k].step(curr_average)
-
-        if mode=='collaborative':
-            encoders = aggregate(n_workers, encoders, adj_matrix)
-            decoders = aggregate(n_workers, decoders, adj_matrix)
 
     return encoders, worker_losses, encoded_dim
 
