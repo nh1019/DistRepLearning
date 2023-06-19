@@ -18,49 +18,45 @@ def main(args):
     np.random.seed(2)
     A = generate_graph(5, args.topology)
 
-    fracs = [0.01, 0.02, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.75]
-    for frac in fracs:
-        encoders, AE_losses, encoded_dim = train_AE(
-            mode=args.model_training,
-            dataset=args.dataset,
-            batch_size=16,
-            epochs=args.model_epochs,
-            encoded_dim=args.encoded_dim,
-            optimizer=args.optimizer,
-            warmup_epochs=args.warmup_epochs,
-            scheduler=args.scheduler,
-            adj_matrix=A,
-            data_fraction=frac)
+    encoders, AE_losses, encoded_dim = train_AE(
+        mode=args.model_training,
+        dataset=args.dataset,
+        batch_size=16,
+        epochs=args.model_epochs,
+        encoded_dim=args.encoded_dim,
+        optimizer=args.optimizer,
+        warmup_epochs=args.warmup_epochs,
+        scheduler=args.scheduler,
+        adj_matrix=A)
         
-        plot_losses(AE_losses, f'{args.model_training}_Autoencoder_{frac}_MSE_Losses', args.output)
+    plot_losses(AE_losses, f'{args.model_training}_Autoencoder_{frac}_MSE_Losses', args.output)
 
-        classifiers, classifier_losses, classifier_accuracies = train_classifier(
-            models=encoders,
-            dataset=args.dataset,
-            mode=args.classifier_training,
-            epochs=args.classifier_epochs,
-            batch_size=16,
-            encoded_dim=encoded_dim,
-            optimizer=args.optimizer,
-            warmup_epochs=args.warmup_epochs,
-            scheduler=args.scheduler,
-            testing=args.testing,
-            data_fraction=frac,
-            adj_matrix=A)
-        
-        plot_losses(classifier_losses, f'Autoencoder_{args.classifier_training}_{frac}_Classifier_Losses', args.output)
-        plot_accuracies(classifier_accuracies, f'Autoencoder_{args.classifier_training}_{frac}_Classifier_Accuracies', args.output)
+    classifiers, classifier_losses, classifier_accuracies = train_classifier(
+        models=encoders,
+        dataset=args.dataset,
+        mode=args.classifier_training,
+        epochs=args.classifier_epochs,
+        batch_size=16,
+        encoded_dim=encoded_dim,
+        optimizer=args.optimizer,
+        warmup_epochs=args.warmup_epochs,
+        scheduler=args.scheduler,
+        testing=args.testing,
+        adj_matrix=A)
+    
+    plot_losses(classifier_losses, f'Autoencoder_{args.classifier_training}_Classifier_Losses', args.output)
+    plot_accuracies(classifier_accuracies, f'Autoencoder_{args.classifier_training}_Classifier_Accuracies', args.output)
 
-        test_accuracies, confusion_matrices = test_classifier(
-            models=encoders,
-            classifier=classifiers,
-            dataset=args.dataset,
-            mode=args.testing)
-        
-        for i, cm in enumerate(confusion_matrices):
-            plot_confusion_matrix(cm, args.dataset, args.output, i)
-        
-        save_accuracies(test_accuracies, args.output, frac)
+    test_accuracies, confusion_matrices = test_classifier(
+        models=encoders,
+        classifier=classifiers,
+        dataset=args.dataset,
+        mode=args.testing)
+    
+    for i, cm in enumerate(confusion_matrices):
+        plot_confusion_matrix(cm, args.dataset, args.output, i)
+    
+    save_accuracies(test_accuracies, args.output)
 
 def train_AE(mode: str, 
              dataset: str, 
