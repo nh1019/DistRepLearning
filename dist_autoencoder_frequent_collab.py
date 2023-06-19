@@ -153,11 +153,6 @@ def train_AE(mode: str,
                 loss.backward()
                 optimizers[k].step()
 
-                if batch_idx%len(trainloader)==len(trainloader)-1:
-                    avg_train_loss = np.mean(curr_loss)
-                    print(f'In epoch {epoch} for worker {k}, average training loss is {avg_train_loss}.')
-                    worker_losses[k].append(avg_train_loss)
-
         
         #check whether to stop early 
         curr_average = np.mean([worker_losses[k][epoch] for k in worker_losses.keys()])
