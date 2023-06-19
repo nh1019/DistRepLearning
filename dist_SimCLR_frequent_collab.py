@@ -91,7 +91,7 @@ def train_simCLR(mode: str,
         model.train()
 
     for epoch in range(epochs):
-        for step in range(len(trainloader[0])):
+        for step in range(len(trainloaders[0])):
             for k in range(n_workers):
                 (images, _) = next(iter(trainloaders[k]))
                 images = torch.cat(images, dim=0)
