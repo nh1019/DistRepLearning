@@ -140,18 +140,17 @@ def train_AE(mode: str,
 
     for epoch in range(epochs):
         for k in range(n_workers):
-            curr_loss = []
             (features, _) = next(iter(trainloaders[k]))
-                features = features.to(device)
+            features = features.to(device)
 
-                optimizers[k].zero_grad()
-                encoded = encoders[k](features)
-                decoded = decoders[k](encoded)
+            optimizers[k].zero_grad()
+            encoded = encoders[k](features)
+            decoded = decoders[k](encoded)
 
-                loss = criterion(decoded, features)
-                curr_loss.append(loss.item())
-                loss.backward()
-                optimizers[k].step()
+            loss = criterion(decoded, features)
+            loss.backward()
+            optimizers[k].step()
+            worker_losses[k].append(loss.item())
 
         
         #check whether to stop early 
