@@ -108,9 +108,9 @@ def train_simCLR(mode: str,
          
             models = aggregate(n_workers, models, adj_matrix)
                 
-      for scheduler in schedulers:
-          scheduler.step()
-
+        for scheduler in schedulers:
+            scheduler.step()
+            
     return models, worker_losses
 
 
